@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Calendario Semanal de Citas</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Google Fonts - Roboto -->
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+<!-- Day.js -->
+<script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/isoWeek.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/isSameOrBefore.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dayjs@1/locale/es.js"></script>
+<script>
+  dayjs.extend(dayjs_plugin_isoWeek);
+  dayjs.extend(dayjs_plugin_isSameOrBefore);
+  dayjs.locale('es');
+</script>
+
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+html, body { 
+  height:100%; 
+  font-family:'Roboto', sans-serif; 
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+body { 
+  background:#f5f5f5; 
+  display:flex; 
+  flex-direction:column; 
+  padding:16px;
+}
+
+.calendar { 
+  flex:1; 
+  display:flex; 
+  flex-direction:column; 
+  background:#fff; 
+  border-radius:8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1), 0 8px 16px rgba(0,0,0,0.1);
+  overflow:hidden;
+  max-width:1400px;
+  margin:0 auto;
+  width:100%;
+}
+
+.header { 
+  display:flex; 
+  justify-content:space-between; 
+  align-items:center; 
+  padding:16px 24px; 
+  background:#fff; 
+  border-bottom:1px solid #e0e0e0;
+  flex-wrap:wrap; 
+  gap:12px; 
+}
+
+.header h1 { 
+  font-size:20px; 
+  font-weight:500; 
+  color:#202124;
+  letter-spacing:-0.2px;
+}
+
+.nav-btn, .refresh-btn { 
+  padding:8px 16px; 
+  border-radius:4px; 
+  border:none; 
+  cursor:pointer; 
+  font-size:14px;
+  font-weight:500;
+  font-family:'Roboto', sans-serif;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.nav-btn { 
+  background:#1a73e8; 
+  color:#fff; 
+  min-width:40px;
+}
+
+.nav-btn:hover { 
+  background:#1557b0; 
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.nav-btn:active {
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  transform: translateY(1px);
+}
+
+.refresh-btn { 
+  background:#34a853; 
+  color:#fff; 
+}
+
+.refresh-btn:hover { 
+  background:#2d8e47; 
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.refresh-btn:active {
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  transform: translateY(1px);
+}
+
+.last-update { 
+  font-size:12px; 
+  color:#5f6368; 
+  width:100%; 
+  text-align:center; 
+  margin-top:8px;
+  font-weight:400;
+}
+
+.week-grid-wrapper { 
+  flex:1; 
+  overflow:auto; 
+  background:#fff;
+}
+
+.week-grid { 
+  display:grid; 
+  grid-template-columns:80px repeat(5,1fr); 
+  min-width:700px; 
+  gap:0;
+}
+
+.cell { 
+  border:1px solid #dadce0; 
+  border-left:none;
+  border-top:none;
+  padding:8px; 
+  min-height:72px; 
+  font-size:13px; 
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position:relative;
+}
+
+.cell:hover {
+  z-index:1;
+}
+
+.time { 
+  background:#f8f9fa; 
+  font-weight:500; 
+  text-align:center; 
+  color:#5f6368;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-left:1px solid #dadce0;
+  font-size:12px;
+}
+
+.day-header { 
+  background:#fff; 
+  font-weight:500; 
+  text-align:center; 
+  color:#202124;
+  padding:16px 8px;
+  font-size:14px;
+  border-top:1px solid #dadce0;
+  border-left:1px solid #dadce0;
+}
+
+.day-header:first-of-type {
+  border-left:1px solid #dadce0;
+}
+
+.free { 
+  background:#fff; 
+  cursor:pointer;
+}
+
+.free:hover { 
+  background:#e8f0fe; 
+  box-shadow: inset 0 0 0 2px #1a73e8;
+}
+
+.busy { 
+  background:#fef7e0; 
+  border-left:4px solid #f9ab00 !important;
+  cursor:grab; 
+  padding-left:12px;
+}
+
+.busy:hover {
+  background:#fef3cd;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+}
+
+.busy.dragging { 
+  opacity:0.6; 
+  cursor:grabbing; 
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.busy strong { 
+  display:block; 
+  font-size:14px; 
+  color:#202124;
+  font-weight:500;
+  margin-bottom:4px;
+}
+
+.busy span { 
+  font-size:12px; 
+  color:#5f6368; 
+  display:block; 
+  line-height:1.4;
+}
+
+.drop-target { 
+  background:#e8f0fe !important; 
+  box-shadow: inset 0 0 0 2px #1a73e8 !important;
+}
+
+.modal { 
+  position:fixed; 
+  inset:0; 
+  display:none; 
+  align-items:center; 
+  justify-content:center; 
+  background:rgba(0,0,0,0.5); 
+  z-index:1000; 
+  padding:16px;
+}
+
+.modal-content { 
+  background:#fff; 
+  border-radius:8px; 
+  padding:24px; 
+  max-width:480px; 
+  width:100%;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2), 0 16px 32px rgba(0,0,0,0.15);
+  max-height:90vh;
+  overflow:auto;
+}
+
+.modal-content h3 {
+  color:#202124;
+  font-size:20px;
+  font-weight:500;
+  margin-bottom:16px;
+}
+
+.modal-content p {
+  color:#5f6368;
+  font-size:14px;
+  line-height:1.6;
+  margin-bottom:12px;
+}
+
+.modal-content p b {
+  color:#202124;
+  font-weight:500;
+}
+
+.close { 
+  float:right; 
+  cursor:pointer; 
+  font-weight:400;
+  font-size:28px;
+  color:#5f6368;
+  line-height:20px;
+  width:32px;
+  height:32px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+  transition: background 0.2s;
+  margin:-8px -8px 0 0;
+}
+
+.close:hover {
+  background:#f1f3f4;
+}
+
+.form-group {
+  margin-bottom:16px;
+}
+
+.form-group label {
+  display:block;
+  font-size:14px;
+  color:#202124;
+  font-weight:500;
+  margin-bottom:8px;
+}
+
+.form-group input,
+.form-group textarea {
+  width:100%;
+  padding:12px;
+  border:1px solid #dadce0;
+  border-radius:4px;
+  font-size:14px;
+  font-family:'Roboto', sans-serif;
+  color:#202124;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline:none;
+  border-color:#1a73e8;
+  box-shadow: 0 0 0 2px rgba(26,115,232,0.1);
+}
+
+.form-group textarea {
+  resize:vertical;
+  min-height:80px;
+}
+
+.form-actions {
+  display:flex;
+  gap:12px;
+  justify-content:flex-end;
+  margin-top:24px;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding:10px 24px;
+  border-radius:4px;
+  border:none;
+  cursor:pointer;
+  font-size:14px;
+  font-weight:500;
+  font-family:'Roboto', sans-serif;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+}
+
+.btn-primary {
+  background:#1a73e8;
+  color:#fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.btn-primary:hover {
+  background:#1557b0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.btn-primary:disabled {
+  background:#dadce0;
+  color:#5f6368;
+  cursor:not-allowed;
+  box-shadow:none;
+}
+
+.btn-secondary {
+  background:#fff;
+  color:#5f6368;
+  border:1px solid #dadce0;
+}
+
+.btn-secondary:hover {
+  background:#f8f9fa;
+  border-color:#5f6368;
+}
+
+.error-message {
+  background:#fce8e6;
+  color:#c5221f;
+  padding:12px;
+  border-radius:4px;
+  font-size:13px;
+  margin-bottom:16px;
+  display:none;
+}
+
+.success-message {
+  background:#e6f4ea;
+  color:#137333;
+  padding:12px;
+  border-radius:4px;
+  font-size:13px;
+  margin-bottom:16px;
+  display:none;
+}
+
+.checkbox-group {
+  display:flex;
+  gap:16px;
+  flex-wrap:wrap;
+}
+
+.checkbox-item {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  cursor:pointer;
+}
+
+.checkbox-item input[type="checkbox"] {
+  width:18px;
+  height:18px;
+  cursor:pointer;
+  accent-color:#1a73e8;
+}
+
+.checkbox-item label {
+  margin:0;
+  cursor:pointer;
+  font-size:14px;
+  color:#202124;
+  font-weight:400;
+}
+
+@media (max-width:768px) {
+  body { padding:8px; }
+  .calendar { border-radius:4px; }
+  .week-grid { grid-template-columns:60px repeat(5,1fr); }
+  .cell { min-height:80px; font-size:12px; }
+  .header { padding:12px 16px; }
+  .header h1 { font-size:18px; }
+  .nav-btn, .refresh-btn { padding:6px 12px; font-size:13px; }
+}
+</style>
+</head>
+<body>
+<div class="calendar">
+  <div class="header">
+    <button class="nav-btn" onclick="changeWeek(-1)">Anterior</button>
+    <h1 id="title"></h1>
+    <button class="nav-btn" onclick="changeWeek(1)">Siguiente</button>
+    <button class="refresh-btn" onclick="verificarActualizaciones()">Actualizar</button>
+    <div class="last-update" id="lastUpdate"></div>
+  </div>
+  <div class="week-grid-wrapper">
+    <div id="week" class="week-grid"></div>
+  </div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal()">×</span>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+let currentWeek = dayjs().startOf('isoWeek');
+let citas = [];
+let draggedCita = null;
+let lastUpdatedAt = null; // Timestamp de última actualización conocida
+const WEBHOOK_URL = 'https://webhook.arvera.es/webhook/citas';
+const CHECK_UPDATE_URL = 'https://webhook.arvera.es/webhook/check-update';
+const AGENDAR_URL = 'https://webhook.arvera.es/webhook/agendar';
+const RESERVA_URL = 'https://tureserva.com?hora=';
+const AUTO_REFRESH_INTERVAL = 2 * 60 * 1000; // 2 minutos
+
+// Verificar si hay actualizaciones nuevas
+async function verificarActualizaciones() {
+  try {
+    const res = await fetch(CHECK_UPDATE_URL);
+    const data = await res.json();
+    const updatedAt = data.updatedAt;
+    
+    // Si es la primera carga o hay cambios, cargar las citas
+    if (!lastUpdatedAt || updatedAt !== lastUpdatedAt) {
+      lastUpdatedAt = updatedAt;
+      await cargarCitas();
+    } else {
+      console.log('No hay cambios. Última actualización:', updatedAt);
+      actualizarIndicadorSinCambios();
+    }
+  } catch(e) {
+    console.error('Error verificando actualizaciones:', e);
+    // Si falla la verificación, intentar cargar igual
+    await cargarCitas();
+  }
+}
+
+// Obtener citas desde el webhook
+async function cargarCitas() {
+  try {
+    const res = await fetch(WEBHOOK_URL);
+    citas = await res.json();
+    actualizarUltimaActualizacion();
+    render();
+  } catch(e) {
+    console.error('Error cargando citas:', e);
+    document.getElementById('lastUpdate').innerText = '❌ Error al cargar';
+  }
+}
+
+// Actualizar indicador sin cambios
+function actualizarIndicadorSinCambios() {
+  const ahora = dayjs().format('HH:mm:ss');
+  document.getElementById('lastUpdate').innerText = `✓ Sincronizado (sin cambios) - ${ahora}`;
+}
+
+// Actualizar indicador de última actualización
+function actualizarUltimaActualizacion() {
+  const ahora = dayjs().format('HH:mm:ss');
+  document.getElementById('lastUpdate').innerText = `Última actualización: ${ahora}`;
+}
+
+// Generar horas de citas
+function generarHoras() {
+  const horas = [];
+  const bloques = [['08:30','12:15'],['15:45','18:00']];
+  bloques.forEach(([i,f]) => {
+    let t = dayjs(`2000-01-01 ${i}`);
+    const end = dayjs(`2000-01-01 ${f}`);
+    while(t.isSameOrBefore(end)) {
+      horas.push(t.format('HH:mm'));
+      t = t.add(45,'minute');
+    }
+  });
+  return horas;
+}
+
+// Renderizar calendario
+function render() {
+  document.getElementById('title').innerText = `Semana ${currentWeek.isoWeek()} · ${currentWeek.format('D MMM')} - ${currentWeek.add(4,'day').format('D MMM')}`;
+  const grid = document.getElementById('week');
+  grid.innerHTML = '';
+
+  // Cabeceras días
+  grid.appendChild(document.createElement('div'));
+  for(let d=0; d<5; d++){
+    const day = currentWeek.add(d,'day');
+    const h = document.createElement('div');
+    h.className='cell day-header';
+    h.innerText=day.format('ddd D');
+    grid.appendChild(h);
+  }
+
+  generarHoras().forEach(hora=>{
+    const timeCell = document.createElement('div');
+    timeCell.className='cell time';
+    timeCell.innerText=hora;
+    grid.appendChild(timeCell);
+
+    for(let d=0; d<5; d++){
+      const fecha = currentWeek.add(d,'day').format('YYYY-MM-DD');
+      const cita = citas.find(c => c.start === `${fecha} ${hora}`);
+
+      const cell = document.createElement('div');
+      cell.className='cell ' + (cita?'busy':'free');
+      cell.dataset.slot = `${fecha} ${hora}`;
+
+      // Drag & drop
+      cell.ondragover = e => { e.preventDefault(); cell.classList.add('drop-target'); };
+      cell.ondragleave = () => cell.classList.remove('drop-target');
+      cell.ondrop = () => {
+        if(draggedCita && !cita){
+          draggedCita.start = cell.dataset.slot;
+          render();
+        }
+      };
+
+      if(cita){
+        cell.draggable=true;
+        cell.innerHTML=`<strong>${cita.name}</strong><span>${cita.service}</span><span>${cita.modelo}</span><span>${cita.matricula}</span>`;
+        cell.ondragstart=()=>{ draggedCita=cita; cell.classList.add('dragging'); };
+        cell.ondragend=()=>{ draggedCita=null; cell.classList.remove('dragging'); };
+        cell.onclick=()=>openModal(`
+          <h3>${hora} - ${dayjs(cita.start).format('dddd')}</h3>
+          <p><b>Nombre:</b> ${cita.name}</p>
+          <p><b>Teléfono:</b> ${cita.phone}</p>
+          <p><b>Servicio:</b> ${cita.service}</p>
+          <p><b>Modelo:</b> ${cita.modelo}</p>
+          <p><b>Matrícula:</b> ${cita.matricula}</p>
+        `);
+      }else{
+        cell.onclick=()=>abrirFormularioAgendamiento(fecha, hora);
+      }
+
+      grid.appendChild(cell);
+    }
+  });
+}
+
+function changeWeek(offset){
+  currentWeek = currentWeek.add(offset,'week');
+  render();
+}
+
+function openModal(html){
+  document.getElementById('modal-body').innerHTML=html;
+  document.getElementById('modal').style.display='flex';
+}
+
+function closeModal(){
+  document.getElementById('modal').style.display='none';
+}
+
+// Abrir formulario de agendamiento
+function abrirFormularioAgendamiento(fecha, hora) {
+  const fechaHora = dayjs(`${fecha} ${hora}`);
+  const endTime = fechaHora.add(45, 'minute');
+  
+  const formulario = `
+    <h3>Agendar Cita</h3>
+    <p style="color:#5f6368; margin-bottom:20px;">
+      ${fechaHora.format('dddd, D [de] MMMM YYYY - HH:mm')}
+    </p>
+    
+    <div id="mensajes"></div>
+    
+    <form id="formAgendamiento" onsubmit="enviarAgendamiento(event, '${fecha}', '${hora}')">
+      <div class="form-group">
+        <label for="nombre">Nombre completo *</label>
+        <input type="text" id="nombre" name="nombre" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="telefono">Teléfono *</label>
+        <input type="tel" id="telefono" name="telefono" required placeholder="600 000 000" inputmode="tel">
+      </div>
+      
+      <div class="form-group">
+        <label>Servicio *</label>
+        <div class="checkbox-group">
+          <div class="checkbox-item">
+            <input type="checkbox" id="servicio-neumaticos" name="servicio" value="Neumáticos">
+            <label for="servicio-neumaticos">Neumáticos</label>
+          </div>
+          <div class="checkbox-item">
+            <input type="checkbox" id="servicio-alineacion" name="servicio" value="Alineación">
+            <label for="servicio-alineacion">Alineación</label>
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="matricula">Matrícula</label>
+        <input type="text" id="matricula" name="matricula" placeholder="1234ABC">
+      </div>
+      
+      <div class="form-group">
+        <label for="modelo">Modelo del vehículo</label>
+        <input type="text" id="modelo" name="modelo" placeholder="Ej: Seat León">
+      </div>
+      
+      <div class="form-group">
+        <label for="notes">Notas adicionales</label>
+        <textarea id="notes" name="notes" placeholder="Información adicional sobre la cita..."></textarea>
+      </div>
+      
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button type="submit" class="btn-primary" id="btnSubmit">Agendar Cita</button>
+      </div>
+    </form>
+  `;
+  
+  openModal(formulario);
+}
+
+// Enviar agendamiento al webhook
+async function enviarAgendamiento(event, fecha, hora) {
+  event.preventDefault();
+  
+  const btnSubmit = document.getElementById('btnSubmit');
+  const mensajes = document.getElementById('mensajes');
+  
+  // Deshabilitar botón
+  btnSubmit.disabled = true;
+  btnSubmit.textContent = 'Agendando...';
+  
+  // Limpiar mensajes
+  mensajes.innerHTML = '';
+  
+  try {
+    // Obtener servicios seleccionados
+    const serviciosSeleccionados = [];
+    if (document.getElementById('servicio-neumaticos').checked) {
+      serviciosSeleccionados.push('Neumáticos');
+    }
+    if (document.getElementById('servicio-alineacion').checked) {
+      serviciosSeleccionados.push('Alineación');
+    }
+    
+    // Validar que al menos un servicio esté seleccionado
+    if (serviciosSeleccionados.length === 0) {
+      mensajes.innerHTML = '<div class="error-message" style="display:block;">Por favor, selecciona al menos un servicio.</div>';
+      btnSubmit.disabled = false;
+      btnSubmit.textContent = 'Agendar Cita';
+      return;
+    }
+    
+    const fechaHora = dayjs(`${fecha} ${hora}`);
+    const endTime = fechaHora.add(45, 'minute');
+    
+    const datos = {
+      startTime: fechaHora.toISOString(),
+      endTime: endTime.toISOString(),
+      nombre: document.getElementById('nombre').value.trim(),
+      telefono: document.getElementById('telefono').value.trim(),
+      servicio: serviciosSeleccionados.join(', '),
+      matricula: document.getElementById('matricula').value.trim() || '',
+      modelo: document.getElementById('modelo').value.trim() || '',
+      notes: document.getElementById('notes').value.trim() || ''
+    };
+    
+    console.log('Enviando datos:', datos);
+    
+    const response = await fetch(AGENDAR_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(datos)
+    });
+    
+    if (response.ok) {
+      mensajes.innerHTML = '<div class="success-message" style="display:block;">¡Cita agendada exitosamente!</div>';
+      
+      // Esperar 1.5 segundos y recargar citas
+      setTimeout(async () => {
+        closeModal();
+        await verificarActualizaciones();
+      }, 1500);
+    } else {
+      const errorData = await response.text();
+      console.error('Error del servidor:', errorData);
+      throw new Error(errorData || 'Error al agendar la cita');
+    }
+  } catch (error) {
+    console.error('Error completo:', error);
+    const mensajeError = error.message || 'Error al agendar la cita. Por favor, intenta de nuevo.';
+    mensajes.innerHTML = `<div class="error-message" style="display:block;">${mensajeError}</div>`;
+    btnSubmit.disabled = false;
+    btnSubmit.textContent = 'Agendar Cita';
+  }
+}
+
+// Inicializar
+verificarActualizaciones();
+
+// Recarga automática cada 2 minutos (verifica primero si hay cambios)
+setInterval(verificarActualizaciones, AUTO_REFRESH_INTERVAL);
+</script>
+</body>
+</html>
