@@ -468,8 +468,15 @@ async function verificarActualizaciones() {
     const data = await res.json();
     const updatedAt = data.updatedAt;
     
+    console.log('Verificando actualizaciones:', { 
+      nuevo: updatedAt, 
+      anterior: lastUpdatedAt,
+      hayDiferencia: updatedAt !== lastUpdatedAt 
+    });
+    
     // Si es la primera carga o hay cambios, cargar las citas
     if (!lastUpdatedAt || updatedAt !== lastUpdatedAt) {
+      console.log('Cargando citas por cambios detectados');
       lastUpdatedAt = updatedAt;
       await cargarCitas();
     } else {
