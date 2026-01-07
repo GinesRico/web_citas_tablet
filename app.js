@@ -607,19 +607,43 @@ class CalendarioApp {
         <div class="form-group">
           <label for="telefono">Teléfono *</label>
           <div style="display:flex;gap:8px;">
-            <select id="prefijo" name="prefijo" style="width:120px;padding:12px 8px;border:1px solid var(--border-color);border-radius:4px;font-size:14px;font-family:'Roboto',sans-serif;color:var(--text-primary);background:var(--surface);">
-              <option value="+34" selected>🇪🇸 +34</option>
-              <option value="+33">🇫🇷 +33</option>
-              <option value="+49">🇩🇪 +49</option>
-              <option value="+39">🇮🇹 +39</option>
-              <option value="+351">🇵🇹 +351</option>
-              <option value="+32">🇧🇪 +32</option>
-              <option value="+31">🇳🇱 +31</option>
-              <option value="+41">🇨🇭 +41</option>
-              <option value="+44">🇬🇧 +44</option>
-              <option value="+353">🇮🇪 +353</option>
-              <option value="+48">🇵🇱 +48</option>
-              <option value="+420">🇨🇿 +420</option>
+            <select id="prefijo" name="prefijo" style="width:140px;padding:12px 8px;border:1px solid var(--border-color);border-radius:4px;font-size:14px;font-family:'Roboto',sans-serif;color:var(--text-primary);background:var(--surface);">
+              <option value="+34" selected>🇪🇸 España +34</option>
+              <option value="+33">🇫🇷 Francia +33</option>
+              <option value="+49">🇩🇪 Alemania +49</option>
+              <option value="+39">🇮🇹 Italia +39</option>
+              <option value="+351">🇵🇹 Portugal +351</option>
+              <option value="+44">🇬🇧 Reino Unido +44</option>
+              <option value="+32">🇧🇪 Bélgica +32</option>
+              <option value="+31">🇳🇱 Holanda +31</option>
+              <option value="+41">🇨🇭 Suiza +41</option>
+              <option value="+43">🇦🇹 Austria +43</option>
+              <option value="+353">🇮🇪 Irlanda +353</option>
+              <option value="+48">🇵🇱 Polonia +48</option>
+              <option value="+420">🇨🇿 Chequia +420</option>
+              <option value="+30">🇬🇷 Grecia +30</option>
+              <option value="+46">🇸🇪 Suecia +46</option>
+              <option value="+47">🇳🇴 Noruega +47</option>
+              <option value="+45">🇩🇰 Dinamarca +45</option>
+              <option value="+358">🇫🇮 Finlandia +358</option>
+              <option value="+40">🇷🇴 Rumania +40</option>
+              <option value="+359">🇧🇬 Bulgaria +359</option>
+              <option value="+1">🇺🇸 USA/Canadá +1</option>
+              <option value="+52">🇲🇽 México +52</option>
+              <option value="+54">🇦🇷 Argentina +54</option>
+              <option value="+55">🇧🇷 Brasil +55</option>
+              <option value="+56">🇨🇱 Chile +56</option>
+              <option value="+57">🇨🇴 Colombia +57</option>
+              <option value="+58">🇻🇪 Venezuela +58</option>
+              <option value="+51">🇵🇪 Perú +51</option>
+              <option value="+593">🇪🇨 Ecuador +593</option>
+              <option value="+598">🇺🇾 Uruguay +598</option>
+              <option value="+212">🇲🇦 Marruecos +212</option>
+              <option value="+213">🇩🇿 Argelia +213</option>
+              <option value="+86">🇨🇳 China +86</option>
+              <option value="+81">🇯🇵 Japón +81</option>
+              <option value="+82">🇰🇷 Corea Sur +82</option>
+              <option value="+91">🇮🇳 India +91</option>
             </select>
             <input type="tel" id="telefono" name="telefono" required placeholder="600 123 456" inputmode="tel" style="flex:1;">
           </div>
