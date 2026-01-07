@@ -23,36 +23,57 @@ const CONFIG = {
 class DeviceDetectionService {
   static getDeviceType() {
     const ua = navigator.userAgent.toLowerCase();
+    const platform = navigator.platform?.toLowerCase() || '';
+    const maxTouchPoints = navigator.maxTouchPoints || 0;
     
     // Detectar Android
     const isAndroid = ua.includes('android');
     
-    // Detectar iOS
-    const isIOS = /ipad|iphone|ipod/.test(ua);
+    // Detectar iOS/iPadOS (mejorado para iPads modernos)
+    const isIOS = /ipad|iphone|ipod/.test(ua) || 
+                  (platform === 'macintel' && maxTouchPoints > 1); // iPadOS 13+ se identifica como Mac
     
-    // Detectar tablets (Android o iPad)
+    // Detectar iPad específicamente (incluyendo iPadOS 13+)
+    const isIPad = ua.includes('ipad') || 
+                   (platform === 'macintel' && maxTouchPoints > 1);
+    
+    // Detectar iPhone
+    const isIPhone = ua.includes('iphone') || ua.includes('ipod');
+    
+    // Detectar tablets (Android, iPad, o por características)
     const isTablet = (
       (isAndroid && !ua.includes('mobile')) || // Android tablet
-      ua.includes('ipad') || // iPad
-      (ua.includes('tablet')) || // Generic tablet
-      (window.innerWidth >= 768 && window.innerWidth <= 1366 && (isAndroid || isIOS)) // Por tamaño de pantalla
+      isIPad || // iPad/iPadOS
+      ua.includes('tablet') || // Generic tablet
+      // Detectar tablets por touch points y tamaño de pantalla
+      (maxTouchPoints > 1 && window.innerWidth >= 768 && window.innerWidth <= 1366) ||
+      // Tablets Android grandes
+      (isAndroid && window.innerWidth >= 600)
     );
     
     // Detectar móvil
     const isMobile = (
       (isAndroid && ua.includes('mobile')) || // Android móvil
-      ua.includes('iphone') ||
-      ua.includes('ipod') ||
-      window.innerWidth < 768
+      isIPhone || // iPhone
+      (maxTouchPoints > 0 && window.innerWidth < 768 && !isTablet) || // Touch pequeño
+      window.innerWidth < 600
     );
+    
+    // Desktop: no es tablet ni móvil Y (no tiene touch points O tiene pantalla muy grande)
+    const isDesktop = !isTablet && !isMobile && 
+                      (maxTouchPoints === 0 || window.innerWidth > 1366);
     
     return {
       isAndroid,
       isIOS,
+      isIPad,
+      isIPhone,
       isTablet,
       isMobile,
-      isDesktop: !isTablet && !isMobile,
-      isAndroidTablet: isAndroid && isTablet
+      isDesktop,
+      isAndroidTablet: isAndroid && isTablet,
+      maxTouchPoints,
+      screenWidth: window.innerWidth
     };
   }
   
@@ -61,19 +82,29 @@ class DeviceDetectionService {
     const body = document.body;
     
     // Limpiar clases anteriores
-    body.classList.remove('device-mobile', 'device-tablet', 'device-desktop', 'device-android-tablet');
+    body.classList.remove('device-mobile', 'device-tablet', 'device-desktop', 
+                         'device-android-tablet', 'device-ipad', 'device-iphone');
     
     // Aplicar clases según dispositivo
     if (device.isMobile) {
       body.classList.add('device-mobile');
+      if (device.isIPhone) {
+        body.classList.add('device-iphone');
+      }
     } else if (device.isTablet) {
       body.classList.add('device-tablet');
       if (device.isAndroidTablet) {
         body.classList.add('device-android-tablet');
       }
+      if (device.isIPad) {
+        body.classList.add('device-ipad');
+      }
     } else {
       body.classList.add('device-desktop');
     }
+    
+    // Debug info (puedes ver en consola)
+    console.log('Device Detection:', device);
     
     return device;
   }

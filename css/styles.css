@@ -224,8 +224,9 @@ body.device-desktop .sidebar {
   display: block;
 }
 
-/* Ocultar en tablets Android y móviles */
+/* Ocultar en tablets (Android, iPad) y móviles */
 body.device-android-tablet .sidebar,
+body.device-ipad .sidebar,
 body.device-tablet .sidebar,
 body.device-mobile .sidebar {
   display: none !important;
