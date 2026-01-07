@@ -219,7 +219,7 @@ body {
   overflow-y: auto;
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 1367px) {
   .sidebar {
     display: block;
   }
@@ -795,7 +795,7 @@ body {
    RESPONSIVE
    ========================================== */
 
-@media (max-width: 1199px) {
+@media (max-width: 1366px) {
   .sidebar {
     display: none;
   }
