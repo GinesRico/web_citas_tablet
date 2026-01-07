@@ -219,11 +219,9 @@ body {
   overflow-y: auto;
 }
 
-/* Mostrar solo en escritorio (no tablets) */
-@media (min-width: 1367px) {
-  body.device-desktop .sidebar {
-    display: block;
-  }
+/* Mostrar en escritorio (cualquier tamaño) */
+body.device-desktop .sidebar {
+  display: block;
 }
 
 /* Ocultar en tablets Android y móviles */
