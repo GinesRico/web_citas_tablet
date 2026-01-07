@@ -127,8 +127,8 @@ body {
 
 .week-grid { 
   display:grid; 
-  grid-template-columns:80px repeat(5,1fr); 
-  min-width:700px; 
+  grid-template-columns:80px repeat(7,1fr); 
+  min-width:900px; 
   gap:0;
 }
 
@@ -421,7 +421,7 @@ body {
 @media (max-width:768px) {
   body { padding:8px; }
   .calendar { border-radius:4px; }
-  .week-grid { grid-template-columns:60px repeat(5,1fr); }
+  .week-grid { grid-template-columns:60px repeat(7,1fr); }
   .cell { min-height:80px; font-size:12px; }
   .header { padding:12px 16px; }
   .header h1 { font-size:18px; }
@@ -451,7 +451,7 @@ body {
 </div>
 
 <script>
-let currentWeek = dayjs().startOf('isoWeek');
+let currentWeek = dayjs().startOf('day');
 let citas = [];
 let draggedCita = null;
 const WEBHOOK_URL = 'https://webhook.arvera.es/webhook/citas';
@@ -468,24 +468,29 @@ async function verificarActualizaciones() {
       const data = await res.json();
       const updatedAt = data.updatedAt;
       const lastUpdate = sessionStorage.getItem('lastUpdate');
+      const citasYaCargadas = citas.length > 0; // Verificar si ya hay citas en memoria
       
       console.log('Verificando actualizaciones:', { 
         nuevo: updatedAt, 
         anterior: lastUpdate,
-        hayDiferencia: updatedAt !== lastUpdate 
+        hayDiferencia: updatedAt !== lastUpdate,
+        citasEnMemoria: citas.length
       });
       
-      // Si es la primera carga o hay cambios, cargar las citas
-      if (!lastUpdate) {
-        // Primera carga
-        console.log('Primera carga');
+      // Si es la primera carga de la sesión o no hay citas cargadas, cargar siempre
+      if (!lastUpdate || !citasYaCargadas) {
+        // Primera carga o recarga después de reload
+        console.log('Primera carga - cargando citas');
         sessionStorage.setItem('lastUpdate', updatedAt);
         await cargarCitas();
-      } else if (updatedAt !== lastUpdate) {
-        // Hay cambios - recargar página completa
-        console.log('Cambios detectados - recargando página');
+      } else if (updatedAt && updatedAt !== lastUpdate) {
+        // Hay cambios - guardar primero y luego recargar
+        console.log('Cambios detectados - guardando nuevo timestamp y recargando');
         sessionStorage.setItem('lastUpdate', updatedAt);
-        location.reload();
+        // Forzar recarga desde el servidor (sin cache)
+        setTimeout(() => {
+          location.reload(true);
+        }, 100);
       } else {
         // No hay cambios
         console.log('No hay cambios. Última actualización:', updatedAt);
@@ -502,8 +507,11 @@ async function verificarActualizaciones() {
 // Obtener citas desde el webhook
 async function cargarCitas() {
   try {
+    console.log('Cargando citas desde:', WEBHOOK_URL);
     const res = await fetch(WEBHOOK_URL);
     citas = await res.json();
+    console.log('Citas cargadas:', citas.length, 'citas');
+    console.log('Primera cita:', citas[0]);
     actualizarUltimaActualizacion();
     render();
   } catch(e) {
@@ -541,13 +549,14 @@ function generarHoras() {
 
 // Renderizar calendario
 function render() {
-  document.getElementById('title').innerText = `Semana ${currentWeek.isoWeek()} · ${currentWeek.format('D MMM')} - ${currentWeek.add(4,'day').format('D MMM')}`;
+  const endDate = currentWeek.add(6, 'day');
+  document.getElementById('title').innerText = `${currentWeek.format('D MMM YYYY')} - ${endDate.format('D MMM YYYY')}`;
   const grid = document.getElementById('week');
   grid.innerHTML = '';
 
   // Cabeceras días
   grid.appendChild(document.createElement('div'));
-  for(let d=0; d<5; d++){
+  for(let d=0; d<7; d++){
     const day = currentWeek.add(d,'day');
     const h = document.createElement('div');
     h.className='cell day-header';
@@ -561,7 +570,7 @@ function render() {
     timeCell.innerText=hora;
     grid.appendChild(timeCell);
 
-    for(let d=0; d<5; d++){
+    for(let d=0; d<7; d++){
       const fecha = currentWeek.add(d,'day').format('YYYY-MM-DD');
       const cita = citas.find(c => c.start === `${fecha} ${hora}`);
 
@@ -602,7 +611,7 @@ function render() {
 }
 
 function changeWeek(offset){
-  currentWeek = currentWeek.add(offset,'week');
+  currentWeek = currentWeek.add(offset * 7,'day');
   render();
 }
 
