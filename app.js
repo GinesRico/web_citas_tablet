@@ -292,6 +292,201 @@ class DiasLaborablesService {
   }
 }
 
+// Servicio de Mini Calendario
+class MiniCalendarioService {
+  constructor(app) {
+    this.app = app;
+    this.currentMonth = dayjs();
+  }
+
+  render() {
+    const grid = document.getElementById('miniCalendarGrid');
+    const header = document.getElementById('miniCalendarMonth');
+    
+    if (!grid || !header) return;
+
+    header.textContent = this.currentMonth.format('MMMM YYYY');
+    grid.innerHTML = '';
+
+    // Cabeceras de días
+    const diasSemana = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+    diasSemana.forEach(dia => {
+      const dayHeader = document.createElement('div');
+      dayHeader.className = 'mini-calendar-day-header';
+      dayHeader.textContent = dia;
+      grid.appendChild(dayHeader);
+    });
+
+    // Días del mes
+    const primerDia = this.currentMonth.startOf('month');
+    const ultimoDia = this.currentMonth.endOf('month');
+    const primerDiaSemana = primerDia.day() === 0 ? 7 : primerDia.day(); // Lunes = 1
+    
+    // Días del mes anterior
+    for (let i = 1; i < primerDiaSemana; i++) {
+      const day = primerDia.subtract(primerDiaSemana - i, 'day');
+      this.renderDay(grid, day, true);
+    }
+
+    // Días del mes actual
+    let dia = primerDia;
+    while (dia.isSameOrBefore(ultimoDia, 'day')) {
+      this.renderDay(grid, dia, false);
+      dia = dia.add(1, 'day');
+    }
+
+    // Días del siguiente mes para completar grid
+    const diasRestantes = 42 - grid.children.length + 7; // Total 42 celdas (7 headers + 35 días)
+    for (let i = 1; i <= diasRestantes; i++) {
+      const day = ultimoDia.add(i, 'day');
+      this.renderDay(grid, day, true);
+    }
+  }
+
+  renderDay(grid, dia, otherMonth) {
+    const dayCell = document.createElement('div');
+    dayCell.className = 'mini-calendar-day';
+    dayCell.textContent = dia.format('D');
+    
+    if (otherMonth) {
+      dayCell.classList.add('other-month');
+    }
+
+    // Marcar hoy
+    if (dia.format('YYYY-MM-DD') === dayjs().format('YYYY-MM-DD')) {
+      dayCell.classList.add('today');
+    }
+
+    // Marcar semana seleccionada
+    const semanaActual = this.app.currentWeek;
+    const finSemana = semanaActual.add(6, 'day');
+    const diaStr = dia.format('YYYY-MM-DD');
+    const inicioStr = semanaActual.format('YYYY-MM-DD');
+    const finStr = finSemana.format('YYYY-MM-DD');
+    if (diaStr >= inicioStr && diaStr <= finStr) {
+      dayCell.classList.add('selected');
+    }
+
+    // Marcar fin de semana
+    if (dia.day() === 0 || dia.day() === 6) {
+      dayCell.classList.add('weekend');
+    }
+
+    // Marcar si hay citas
+    const tieneCitas = this.app.citas.some(c => {
+      const fechaCita = dayjs(c.start).format('YYYY-MM-DD');
+      return fechaCita === dia.format('YYYY-MM-DD');
+    });
+    
+    if (tieneCitas) {
+      dayCell.classList.add('has-citas');
+    }
+
+    // Click para navegar a esa semana
+    dayCell.addEventListener('click', () => {
+      if (dia.day() !== 0 && dia.day() !== 6) { // Solo días laborables
+        this.app.currentWeek = dia;
+        this.app.render();
+        this.render();
+      }
+    });
+
+    grid.appendChild(dayCell);
+  }
+
+  prevMonth() {
+    this.currentMonth = this.currentMonth.subtract(1, 'month');
+    this.render();
+  }
+
+  nextMonth() {
+    this.currentMonth = this.currentMonth.add(1, 'month');
+    this.render();
+  }
+}
+
+// Servicio de Estadísticas
+class EstadisticasService {
+  constructor(app) {
+    this.app = app;
+  }
+
+  calcular() {
+    const hoy = dayjs().format('YYYY-MM-DD');
+    const diasSemana = this.app.diasLaborablesService.generarDiasLaborables(
+      this.app.currentWeek,
+      CONFIG.DIAS_LABORABLES
+    );
+
+    // Citas de hoy
+    const citasHoy = this.app.citas.filter(c => {
+      return dayjs(c.start).format('YYYY-MM-DD') === hoy;
+    }).length;
+
+    // Citas de esta semana
+    const fechasSemana = diasSemana.map(d => d.format('YYYY-MM-DD'));
+    const citasSemana = this.app.citas.filter(c => {
+      const fechaCita = dayjs(c.start).format('YYYY-MM-DD');
+      return fechasSemana.includes(fechaCita);
+    }).length;
+
+    // Ocupación (slots ocupados vs disponibles)
+    const horariosService = new HorarioService();
+    const slotsDisponibles = horariosService.generar().length * diasSemana.length;
+    const ocupacion = slotsDisponibles > 0 
+      ? Math.round((citasSemana / slotsDisponibles) * 100) 
+      : 0;
+
+    // Servicio más solicitado
+    const servicios = {};
+    this.app.citas.forEach(c => {
+      if (c.service) {
+        servicios[c.service] = (servicios[c.service] || 0) + 1;
+      }
+    });
+
+    const servicioTop = Object.entries(servicios)
+      .sort((a, b) => b[1] - a[1])[0]?.[0] || '—';
+
+    return {
+      citasHoy,
+      citasSemana,
+      ocupacion,
+      servicioTop
+    };
+  }
+
+  render() {
+    const stats = this.calcular();
+
+    const elementos = {
+      statToday: document.getElementById('statToday'),
+      statWeek: document.getElementById('statWeek'),
+      statOccupancy: document.getElementById('statOccupancy'),
+      statService: document.getElementById('statService')
+    };
+
+    if (elementos.statToday) elementos.statToday.textContent = stats.citasHoy;
+    if (elementos.statWeek) elementos.statWeek.textContent = stats.citasSemana;
+    
+    if (elementos.statOccupancy) {
+      elementos.statOccupancy.textContent = `${stats.ocupacion}%`;
+      elementos.statOccupancy.className = 'stat-badge';
+      if (stats.ocupacion >= 80) {
+        elementos.statOccupancy.classList.add('error');
+      } else if (stats.ocupacion >= 50) {
+        elementos.statOccupancy.classList.add('warning');
+      } else {
+        elementos.statOccupancy.classList.add('success');
+      }
+    }
+
+    if (elementos.statService) {
+      elementos.statService.textContent = stats.servicioTop;
+    }
+  }
+}
+
 /****************************************
  * APLICACIÓN PRINCIPAL
  ****************************************/
@@ -308,6 +503,8 @@ class CalendarioApp {
     this.storage = new StorageService();
     this.ui = new UIService();
     this.horarioService = new HorarioService();
+    this.miniCalendar = new MiniCalendarioService(this);
+    this.estadisticas = new EstadisticasService(this);
     
     // Auto-refresh interval
     this.refreshInterval = null;
@@ -463,6 +660,12 @@ class CalendarioApp {
     } else {
       // Renderizado horizontal para tablet/desktop
       this.renderDesktop(grid, diasLaborables);
+    }
+
+    // Actualizar mini calendario y estadísticas (solo en desktop)
+    if (window.innerWidth >= 1200) {
+      this.miniCalendar.render();
+      this.estadisticas.render();
     }
   }
 
@@ -881,8 +1084,8 @@ document.addEventListener('DOMContentLoaded', () => {
   app = new CalendarioApp();
 });
 
-// Service Worker para PWA
-if ('serviceWorker' in navigator) {
+// Service Worker para PWA (solo en servidor, no en file://)
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then(registration => {
