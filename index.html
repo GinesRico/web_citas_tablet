@@ -280,7 +280,26 @@
       cursor: grabbing;
     }
 
-    .busy strong {
+    /* Citas locales - Color amarillo/naranja */
+    .busy-local {
+      background: #fff8e1;
+      border-left: 4px solid #f9ab00 !important;
+      cursor: grab;
+      padding-left: 16px;
+    }
+
+    .busy-local:hover {
+      background: #ffecb3;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .busy-local.dragging {
+      opacity: 0.5;
+      cursor: grabbing;
+    }
+
+    .busy strong,
+    .busy-local strong {
       display: block;
       font-size: 14px;
       font-weight: 500;
@@ -288,7 +307,8 @@
       margin-bottom: 4px;
     }
 
-    .busy span {
+    .busy span,
+    .busy-local span {
       display: block;
       font-size: 12px;
       color: var(--text-secondary);

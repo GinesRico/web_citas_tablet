@@ -476,7 +476,14 @@ class CalendarioApp {
 
   createCell(fecha, hora, cita) {
     const cell = document.createElement('div');
-    cell.className = 'cell ' + (cita ? 'busy' : 'free');
+    const isLocal = cita?.isLocal || false;
+    
+    if (cita) {
+      cell.className = 'cell ' + (isLocal ? 'busy-local' : 'busy');
+    } else {
+      cell.className = 'cell free';
+    }
+    
     cell.dataset.slot = `${fecha} ${hora}`;
 
     if (cita) {
@@ -599,7 +606,24 @@ class CalendarioApp {
         
         <div class="form-group">
           <label for="telefono">Teléfono *</label>
-          <input type="tel" id="telefono" name="telefono" required placeholder="+34 600 000 000" inputmode="tel">
+          <div style="display:flex;gap:8px;">
+            <select id="prefijo" name="prefijo" style="width:120px;padding:12px 8px;border:1px solid var(--border-color);border-radius:4px;font-size:14px;font-family:'Roboto',sans-serif;color:var(--text-primary);background:var(--surface);">
+              <option value="+34" selected>🇪🇸 +34</option>
+              <option value="+33">🇫🇷 +33</option>
+              <option value="+49">🇩🇪 +49</option>
+              <option value="+39">🇮🇹 +39</option>
+              <option value="+351">🇵🇹 +351</option>
+              <option value="+32">🇧🇪 +32</option>
+              <option value="+31">🇳🇱 +31</option>
+              <option value="+41">🇨🇭 +41</option>
+              <option value="+44">🇬🇧 +44</option>
+              <option value="+353">🇮🇪 +353</option>
+              <option value="+48">🇵🇱 +48</option>
+              <option value="+420">🇨🇿 +420</option>
+            </select>
+            <input type="tel" id="telefono" name="telefono" required placeholder="600 123 456" inputmode="tel" style="flex:1;">
+          </div>
+          <small style="color:var(--text-secondary);font-size:12px;margin-top:4px;display:block;">Introduce solo el número sin prefijo</small>
         </div>
         
         <div class="form-group">
@@ -668,6 +692,11 @@ class CalendarioApp {
         return;
       }
       
+      // Combinar prefijo + teléfono
+      const prefijo = document.getElementById('prefijo').value;
+      const numeroTelefono = document.getElementById('telefono').value.trim().replace(/\s/g, '');
+      const telefonoCompleto = `${prefijo}${numeroTelefono}`;
+      
       const fechaHora = dayjs(`${fecha} ${hora}`);
       const endTime = fechaHora.add(CONFIG.DURACION_CITA, 'minute');
       const hoy = dayjs().format('YYYY-MM-DD');
@@ -678,12 +707,14 @@ class CalendarioApp {
         start: fechaHora.toISOString(),
         end: endTime.toISOString(),
         name: document.getElementById('nombre').value.trim(),
-        phone: document.getElementById('telefono').value.trim(),
+        phone: telefonoCompleto,
         service: servicios.join(', '),
         matricula: document.getElementById('matricula').value.trim() || '',
         modelo: document.getElementById('modelo').value.trim() || '',
         notes: document.getElementById('notes').value.trim() || ''
       };
+      
+      console.log('Datos a enviar:', { ...datos, phone: telefonoCompleto });
       
       if (esMismoDia) {
         // Enviar al webhook de citas locales (sincronizado entre dispositivos)
