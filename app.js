@@ -19,6 +19,66 @@ const CONFIG = {
  * SERVICIOS (Single Responsibility)
  ****************************************/
 
+// DeviceDetectionService: Detecta tipo de dispositivo
+class DeviceDetectionService {
+  static getDeviceType() {
+    const ua = navigator.userAgent.toLowerCase();
+    
+    // Detectar Android
+    const isAndroid = ua.includes('android');
+    
+    // Detectar iOS
+    const isIOS = /ipad|iphone|ipod/.test(ua);
+    
+    // Detectar tablets (Android o iPad)
+    const isTablet = (
+      (isAndroid && !ua.includes('mobile')) || // Android tablet
+      ua.includes('ipad') || // iPad
+      (ua.includes('tablet')) || // Generic tablet
+      (window.innerWidth >= 768 && window.innerWidth <= 1366 && (isAndroid || isIOS)) // Por tamaño de pantalla
+    );
+    
+    // Detectar móvil
+    const isMobile = (
+      (isAndroid && ua.includes('mobile')) || // Android móvil
+      ua.includes('iphone') ||
+      ua.includes('ipod') ||
+      window.innerWidth < 768
+    );
+    
+    return {
+      isAndroid,
+      isIOS,
+      isTablet,
+      isMobile,
+      isDesktop: !isTablet && !isMobile,
+      isAndroidTablet: isAndroid && isTablet
+    };
+  }
+  
+  static applyDeviceClasses() {
+    const device = this.getDeviceType();
+    const body = document.body;
+    
+    // Limpiar clases anteriores
+    body.classList.remove('device-mobile', 'device-tablet', 'device-desktop', 'device-android-tablet');
+    
+    // Aplicar clases según dispositivo
+    if (device.isMobile) {
+      body.classList.add('device-mobile');
+    } else if (device.isTablet) {
+      body.classList.add('device-tablet');
+      if (device.isAndroidTablet) {
+        body.classList.add('device-android-tablet');
+      }
+    } else {
+      body.classList.add('device-desktop');
+    }
+    
+    return device;
+  }
+}
+
 // Servicio de API
 class ApiService {
   async fetch(url, options = {}) {
@@ -505,6 +565,9 @@ class CalendarioApp {
     this.horarioService = new HorarioService();
     this.miniCalendar = new MiniCalendarioService(this);
     this.estadisticas = new EstadisticasService(this);
+    
+    // Detectar y aplicar clases de dispositivo
+    this.deviceInfo = DeviceDetectionService.applyDeviceClasses();
     
     // Auto-refresh interval
     this.refreshInterval = null;

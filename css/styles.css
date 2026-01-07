@@ -219,10 +219,18 @@ body {
   overflow-y: auto;
 }
 
+/* Mostrar solo en escritorio (no tablets) */
 @media (min-width: 1367px) {
-  .sidebar {
+  body.device-desktop .sidebar {
     display: block;
   }
+}
+
+/* Ocultar en tablets Android y móviles */
+body.device-android-tablet .sidebar,
+body.device-tablet .sidebar,
+body.device-mobile .sidebar {
+  display: none !important;
 }
 
 /* ==========================================
