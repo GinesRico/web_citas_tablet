@@ -318,6 +318,26 @@ class CalendarioApp {
   async init() {
     await this.verificarActualizaciones();
     this.startAutoRefresh();
+    this.setupOrientationListener();
+  }
+
+  setupOrientationListener() {
+    let currentWidth = window.innerWidth;
+    
+    // Detectar cambios de orientación/tamaño
+    window.addEventListener('resize', () => {
+      const newWidth = window.innerWidth;
+      const wasDesktop = currentWidth > 768;
+      const isDesktop = newWidth > 768;
+      
+      // Re-renderizar solo si cambió entre móvil ↔ desktop
+      if (wasDesktop !== isDesktop) {
+        console.log('Cambio de orientación detectado, re-renderizando...');
+        this.render();
+      }
+      
+      currentWidth = newWidth;
+    });
   }
 
   startAutoRefresh() {
@@ -434,11 +454,25 @@ class CalendarioApp {
     const grid = document.getElementById('week');
     grid.innerHTML = '';
 
+    // Detectar si es móvil
+    const isMobile = window.innerWidth <= 768;
+
+    if (isMobile) {
+      // Renderizado vertical para móvil
+      this.renderMobile(grid, diasLaborables);
+    } else {
+      // Renderizado horizontal para tablet/desktop
+      this.renderDesktop(grid, diasLaborables);
+    }
+  }
+
+  renderDesktop(grid, diasLaborables) {
+    const hoy = dayjs().format('YYYY-MM-DD');
+    
     // Cabecera vacía para columna de horas
     grid.appendChild(document.createElement('div'));
     
     // Cabeceras de días
-    const hoy = dayjs().format('YYYY-MM-DD');
     diasLaborables.forEach(day => {
       const h = document.createElement('div');
       h.className = 'cell day-header';
@@ -460,10 +494,47 @@ class CalendarioApp {
         const fecha = day.format('YYYY-MM-DD');
         const fechaHoraSlot = `${fecha} ${hora}`;
         
-        // Buscar cita que coincida con esta fecha y hora
         const cita = this.citas.find(c => {
           if (!c.start) return false;
-          // Convertir c.start (ISO) a formato comparable
+          const citaFechaHora = dayjs(c.start).format('YYYY-MM-DD HH:mm');
+          return citaFechaHora === fechaHoraSlot;
+        });
+
+        const cell = this.createCell(fecha, hora, cita);
+        grid.appendChild(cell);
+      });
+    });
+  }
+
+  renderMobile(grid, diasLaborables) {
+    const hoy = dayjs().format('YYYY-MM-DD');
+    
+    // Para cada día, crear un bloque vertical
+    diasLaborables.forEach(day => {
+      const fecha = day.format('YYYY-MM-DD');
+      
+      // Cabecera del día
+      const dayHeader = document.createElement('div');
+      dayHeader.className = 'cell day-header';
+      if (fecha === hoy) {
+        dayHeader.classList.add('today');
+      }
+      dayHeader.innerText = day.format('dddd D [de] MMMM');
+      grid.appendChild(dayHeader);
+
+      // Horarios de este día
+      this.horarioService.generar().forEach(hora => {
+        const fechaHoraSlot = `${fecha} ${hora}`;
+        
+        // Celda de hora
+        const timeCell = document.createElement('div');
+        timeCell.className = 'cell time';
+        timeCell.innerText = hora;
+        grid.appendChild(timeCell);
+
+        // Celda de cita
+        const cita = this.citas.find(c => {
+          if (!c.start) return false;
           const citaFechaHora = dayjs(c.start).format('YYYY-MM-DD HH:mm');
           return citaFechaHora === fechaHoraSlot;
         });
