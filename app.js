@@ -5,7 +5,7 @@ const CONFIG = {
   WEBHOOK_URL: 'https://webhook.arvera.es/webhook/citas',
   CHECK_UPDATE_URL: 'https://webhook.arvera.es/webhook/check-update',
   AGENDAR_URL: 'https://webhook.arvera.es/webhook/agendar',
-  AUTO_REFRESH_INTERVAL: 2 * 60 * 1000, // 2 minutos
+  AUTO_REFRESH_INTERVAL: 30 * 1000, // 30 segundos
   HORARIOS: [
     ['08:30', '12:15'],
     ['15:45', '18:00']
@@ -379,7 +379,7 @@ class CalendarioApp {
     const html = `
       <h3>${hora} - ${dayjs(cita.start).format('dddd')}</h3>
       <p><b>Nombre:</b> ${cita.name}</p>
-      <p><b>Teléfono:</b> ${cita.phone}</p>
+      <p><b>Teléfono:</b> <a href="tel:${cita.phone}" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">${cita.phone}</a></p>
       <p><b>Servicio:</b> ${cita.service}</p>
       ${cita.modelo ? `<p><b>Modelo:</b> ${cita.modelo}</p>` : ''}
       ${cita.matricula ? `<p><b>Matrícula:</b> ${cita.matricula}</p>` : ''}
