@@ -1,775 +1,652 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Calendario Semanal de Citas</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Calendario de Citas - Arvera</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Day.js -->
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/isSameOrBefore.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/locale/es.js"></script>
+  
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-<!-- Google Fonts - Roboto -->
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    :root {
+      --primary-color: #1a73e8;
+      --primary-dark: #1557b0;
+      --success-color: #34a853;
+      --warning-color: #f9ab00;
+      --background: #f8f9fa;
+      --surface: #ffffff;
+      --text-primary: #202124;
+      --text-secondary: #5f6368;
+      --border-color: #dadce0;
+    }
 
-<!-- Day.js -->
-<script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/isoWeek.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/isSameOrBefore.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/dayjs@1/locale/es.js"></script>
-<script>
-  dayjs.extend(dayjs_plugin_isoWeek);
-  dayjs.extend(dayjs_plugin_isSameOrBefore);
-  dayjs.locale('es');
-</script>
+    html, body {
+      height: 100%;
+      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background: var(--background);
+    }
 
-<style>
-* { box-sizing:border-box; margin:0; padding:0; }
-html, body { 
-  height:100%; 
-  font-family:'Roboto', sans-serif; 
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-body { 
-  background:#f5f5f5; 
-  display:flex; 
-  flex-direction:column; 
-  padding:16px;
-}
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
 
-.calendar { 
-  flex:1; 
-  display:flex; 
-  flex-direction:column; 
-  background:#fff; 
-  border-radius:8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1), 0 8px 16px rgba(0,0,0,0.1);
-  overflow:hidden;
-  max-width:1400px;
-  margin:0 auto;
-  width:100%;
-}
+    /* Header */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border-color);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      flex-shrink: 0;
+    }
 
-.header { 
-  display:flex; 
-  justify-content:space-between; 
-  align-items:center; 
-  padding:16px 24px; 
-  background:#fff; 
-  border-bottom:1px solid #e0e0e0;
-  flex-wrap:wrap; 
-  gap:12px; 
-}
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
 
-.header h1 { 
-  font-size:20px; 
-  font-weight:500; 
-  color:#202124;
-  letter-spacing:-0.2px;
-}
+    .title {
+      font-size: 24px;
+      font-weight: 400;
+      color: var(--text-primary);
+      letter-spacing: -0.3px;
+    }
 
-.nav-btn, .refresh-btn { 
-  padding:8px 16px; 
-  border-radius:4px; 
-  border:none; 
-  cursor:pointer; 
-  font-size:14px;
-  font-weight:500;
-  font-family:'Roboto', sans-serif;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  text-transform:uppercase;
-  letter-spacing:0.5px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-}
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
 
-.nav-btn { 
-  background:#1a73e8; 
-  color:#fff; 
-  min-width:40px;
-}
+    .last-update {
+      font-size: 13px;
+      color: var(--text-secondary);
+      padding: 6px 12px;
+      background: #f1f3f4;
+      border-radius: 16px;
+    }
 
-.nav-btn:hover { 
-  background:#1557b0; 
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
+    .btn-icon {
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
 
-.nav-btn:active {
-  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-  transform: translateY(1px);
-}
+    .btn-icon:hover {
+      background: #e8f0fe;
+      color: var(--primary-color);
+    }
 
-.refresh-btn { 
-  background:#34a853; 
-  color:#fff; 
-}
+    .btn-icon.loading svg {
+      animation: spin 1s linear infinite;
+    }
 
-.refresh-btn:hover { 
-  background:#2d8e47; 
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
 
-.refresh-btn:active {
-  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-  transform: translateY(1px);
-}
+    /* Navigation */
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
 
-.last-update { 
-  font-size:12px; 
-  color:#5f6368; 
-  width:100%; 
-  text-align:center; 
-  margin-top:8px;
-  font-weight:400;
-}
+    .btn-nav {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      background: var(--primary-color);
+      color: white;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: 'Roboto', sans-serif;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+      white-space: nowrap;
+    }
 
-.week-grid-wrapper { 
-  flex:1; 
-  overflow:auto; 
-  background:#fff;
-}
+    .btn-nav:hover {
+      background: var(--primary-dark);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
 
-.week-grid { 
-  display:grid; 
-  grid-template-columns:80px repeat(7,1fr); 
-  min-width:900px; 
-  gap:0;
-}
+    .btn-nav:active {
+      transform: translateY(1px);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+    }
 
-.cell { 
-  border:1px solid #dadce0; 
-  border-left:none;
-  border-top:none;
-  padding:8px; 
-  min-height:72px; 
-  font-size:13px; 
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  position:relative;
-}
+    /* Calendar Grid */
+    .grid-wrapper {
+      flex: 1;
+      padding: 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+    }
 
-.cell:hover {
-  z-index:1;
-}
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: 80px repeat(7, 1fr);
+      gap: 0;
+      background: var(--surface);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+      min-width: 1000px;
+    }
 
-.time { 
-  background:#f8f9fa; 
-  font-weight:500; 
-  text-align:center; 
-  color:#5f6368;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-left:1px solid #dadce0;
-  font-size:12px;
-}
+    .cell {
+      border-right: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+      padding: 12px;
+      min-height: 72px;
+      transition: all 0.2s ease;
+    }
 
-.day-header { 
-  background:#fff; 
-  font-weight:500; 
-  text-align:center; 
-  color:#202124;
-  padding:16px 8px;
-  font-size:14px;
-  border-top:1px solid #dadce0;
-  border-left:1px solid #dadce0;
-}
+    .cell:nth-child(8n+1) {
+      border-left: 1px solid var(--border-color);
+    }
 
-.day-header:first-of-type {
-  border-left:1px solid #dadce0;
-}
+    .time {
+      background: #f8f9fa;
+      font-weight: 500;
+      text-align: center;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      border-left: 1px solid var(--border-color);
+    }
 
-.free { 
-  background:#fff; 
-  cursor:pointer;
-}
+    .day-header {
+      background: var(--primary-color);
+      color: white;
+      font-weight: 500;
+      text-align: center;
+      padding: 6px 4px;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      border-top: 1px solid var(--border-color);
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 32px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
 
-.free:hover { 
-  background:#e8f0fe; 
-  box-shadow: inset 0 0 0 2px #1a73e8;
-}
+    .day-header.today {
+      background: var(--success-color);
+      box-shadow: inset 0 -3px 0 rgba(0,0,0,0.2);
+    }
 
-.busy { 
-  background:#fef7e0; 
-  border-left:4px solid #f9ab00 !important;
-  cursor:grab; 
-  padding-left:12px;
-}
+    .free {
+      background: #e8f5e9;
+      cursor: pointer;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-.busy:hover {
-  background:#fef3cd;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-}
+    .free .time-label {
+      font-size: 11px;
+      color: #81c784;
+      font-weight: 500;
+      opacity: 0.7;
+    }
 
-.busy.dragging { 
-  opacity:0.6; 
-  cursor:grabbing; 
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-}
+    .free:hover {
+      background: #c8e6c9;
+      box-shadow: inset 0 0 0 2px var(--success-color);
+    }
 
-.busy strong { 
-  display:block; 
-  font-size:14px; 
-  color:#202124;
-  font-weight:500;
-  margin-bottom:4px;
-}
+    .free:hover .time-label {
+      opacity: 0.5;
+    }
 
-.busy span { 
-  font-size:12px; 
-  color:#5f6368; 
-  display:block; 
-  line-height:1.4;
-}
+    .free::after {
+      content: '+';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+      color: #a5d6a7;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
 
-.drop-target { 
-  background:#e8f0fe !important; 
-  box-shadow: inset 0 0 0 2px #1a73e8 !important;
-}
+    .free:hover::after {
+      opacity: 1;
+      color: var(--success-color);
+    }
 
-.modal { 
-  position:fixed; 
-  inset:0; 
-  display:none; 
-  align-items:center; 
-  justify-content:center; 
-  background:rgba(0,0,0,0.5); 
-  z-index:1000; 
-  padding:16px;
-}
+    .busy {
+      background: #ffebee;
+      border-left: 4px solid #ef5350 !important;
+      cursor: grab;
+      padding-left: 16px;
+    }
 
-.modal-content { 
-  background:#fff; 
-  border-radius:8px; 
-  padding:24px; 
-  max-width:480px; 
-  width:100%;
-  box-shadow: 0 8px 16px rgba(0,0,0,0.2), 0 16px 32px rgba(0,0,0,0.15);
-  max-height:90vh;
-  overflow:auto;
-}
+    .busy:hover {
+      background: #ffcdd2;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
 
-.modal-content h3 {
-  color:#202124;
-  font-size:20px;
-  font-weight:500;
-  margin-bottom:16px;
-}
+    .busy.dragging {
+      opacity: 0.5;
+      cursor: grabbing;
+    }
 
-.modal-content p {
-  color:#5f6368;
-  font-size:14px;
-  line-height:1.6;
-  margin-bottom:12px;
-}
+    .busy strong {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
 
-.modal-content p b {
-  color:#202124;
-  font-weight:500;
-}
+    .busy span {
+      display: block;
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
 
-.close { 
-  float:right; 
-  cursor:pointer; 
-  font-weight:400;
-  font-size:28px;
-  color:#5f6368;
-  line-height:20px;
-  width:32px;
-  height:32px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:50%;
-  transition: background 0.2s;
-  margin:-8px -8px 0 0;
-}
+    .drop-target {
+      background: #c8e6c9 !important;
+      box-shadow: inset 0 0 0 2px var(--success-color) !important;
+    }
 
-.close:hover {
-  background:#f1f3f4;
-}
+    /* Modal */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
 
-.form-group {
-  margin-bottom:16px;
-}
+    .modal.show {
+      display: flex;
+      opacity: 1;
+    }
 
-.form-group label {
-  display:block;
-  font-size:14px;
-  color:#202124;
-  font-weight:500;
-  margin-bottom:8px;
-}
+    .modal-content {
+      background: var(--surface);
+      border-radius: 8px;
+      padding: 24px;
+      max-width: 500px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 11px 15px rgba(0,0,0,0.2), 0 24px 38px rgba(0,0,0,0.14);
+      position: relative;
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
+    }
 
-.form-group input,
-.form-group textarea {
-  width:100%;
-  padding:12px;
-  border:1px solid #dadce0;
-  border-radius:4px;
-  font-size:14px;
-  font-family:'Roboto', sans-serif;
-  color:#202124;
-  transition: border-color 0.2s;
-}
+    .modal.show .modal-content {
+      transform: scale(1);
+    }
 
-.form-group input:focus,
-.form-group textarea:focus {
-  outline:none;
-  border-color:#1a73e8;
-  box-shadow: 0 0 0 2px rgba(26,115,232,0.1);
-}
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
 
-.form-group textarea {
-  resize:vertical;
-  min-height:80px;
-}
+    .modal-close:hover {
+      background: #f1f3f4;
+    }
 
-.form-actions {
-  display:flex;
-  gap:12px;
-  justify-content:flex-end;
-  margin-top:24px;
-}
+    .modal h3 {
+      color: var(--text-primary);
+      font-size: 20px;
+      font-weight: 500;
+      margin-bottom: 16px;
+      padding-right: 32px;
+    }
 
-.btn-primary,
-.btn-secondary {
-  padding:10px 24px;
-  border-radius:4px;
-  border:none;
-  cursor:pointer;
-  font-size:14px;
-  font-weight:500;
-  font-family:'Roboto', sans-serif;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  text-transform:uppercase;
-  letter-spacing:0.5px;
-}
+    .modal p {
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
 
-.btn-primary {
-  background:#1a73e8;
-  color:#fff;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-}
+    .modal p b {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
 
-.btn-primary:hover {
-  background:#1557b0;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
+    /* Forms */
+    .form-group {
+      margin-bottom: 20px;
+    }
 
-.btn-primary:disabled {
-  background:#dadce0;
-  color:#5f6368;
-  cursor:not-allowed;
-  box-shadow:none;
-}
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
 
-.btn-secondary {
-  background:#fff;
-  color:#5f6368;
-  border:1px solid #dadce0;
-}
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      font-size: 14px;
+      font-family: 'Roboto', sans-serif;
+      color: var(--text-primary);
+      transition: all 0.2s;
+      background: var(--surface);
+    }
 
-.btn-secondary:hover {
-  background:#f8f9fa;
-  border-color:#5f6368;
-}
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+    }
 
-.error-message {
-  background:#fce8e6;
-  color:#c5221f;
-  padding:12px;
-  border-radius:4px;
-  font-size:13px;
-  margin-bottom:16px;
-  display:none;
-}
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
 
-.success-message {
-  background:#e6f4ea;
-  color:#137333;
-  padding:12px;
-  border-radius:4px;
-  font-size:13px;
-  margin-bottom:16px;
-  display:none;
-}
+    .checkbox-group {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
 
-.checkbox-group {
-  display:flex;
-  gap:16px;
-  flex-wrap:wrap;
-}
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
 
-.checkbox-item {
-  display:flex;
-  align-items:center;
-  gap:8px;
-  cursor:pointer;
-}
+    .checkbox-item input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      accent-color: var(--primary-color);
+    }
 
-.checkbox-item input[type="checkbox"] {
-  width:18px;
-  height:18px;
-  cursor:pointer;
-  accent-color:#1a73e8;
-}
+    .checkbox-item label {
+      margin: 0;
+      cursor: pointer;
+      font-weight: 400;
+      font-size: 14px;
+    }
 
-.checkbox-item label {
-  margin:0;
-  cursor:pointer;
-  font-size:14px;
-  color:#202124;
-  font-weight:400;
-}
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      margin-top: 24px;
+    }
 
-@media (max-width:768px) {
-  body { padding:8px; }
-  .calendar { border-radius:4px; }
-  .week-grid { grid-template-columns:60px repeat(7,1fr); }
-  .cell { min-height:80px; font-size:12px; }
-  .header { padding:12px 16px; }
-  .header h1 { font-size:18px; }
-  .nav-btn, .refresh-btn { padding:6px 12px; font-size:13px; }
-}
-</style>
+    .btn-primary,
+    .btn-secondary {
+      padding: 10px 24px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      font-family: 'Roboto', sans-serif;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-primary {
+      background: var(--primary-color);
+      color: white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    .btn-primary:disabled {
+      background: #e0e0e0;
+      color: #9e9e9e;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--primary-color);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background: #f8f9fa;
+    }
+
+    .error-message,
+    .success-message {
+      padding: 12px 16px;
+      border-radius: 4px;
+      font-size: 14px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .error-message {
+      background: #fce8e6;
+      color: #c5221f;
+      border-left: 4px solid #c5221f;
+    }
+
+    .success-message {
+      background: #e6f4ea;
+      color: #137333;
+      border-left: 4px solid #34a853;
+    }
+
+    /* Loading */
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+      z-index: 2000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .loading-overlay.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid var(--border-color);
+      border-top-color: var(--primary-color);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .grid-wrapper {
+        padding: 16px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .header-content {
+        padding: 12px 16px;
+      }
+
+      .title {
+        font-size: 16px;
+      }
+
+      .header-content {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .nav-controls {
+        order: 3;
+      }
+
+      .grid-wrapper {
+        padding: 8px;
+      }
+
+      .calendar-grid {
+        font-size: 12px;
+      }
+
+      .cell {
+        padding: 8px;
+        min-height: 60px;
+      }
+
+      .day-header {
+        font-size: 12px;
+        padding: 12px 8px;
+      }
+    }
+  </style>
 </head>
 <body>
-<div class="calendar">
-  <div class="header">
-    <button class="nav-btn" onclick="changeWeek(-1)">Anterior</button>
-    <h1 id="title"></h1>
-    <button class="nav-btn" onclick="changeWeek(1)">Siguiente</button>
-    <button class="refresh-btn" onclick="verificarActualizaciones()">Actualizar</button>
-    <div class="last-update" id="lastUpdate"></div>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="nav-controls">
+        <button class="btn-nav" onclick="app.changeWeek(-1)">
+          <svg viewBox="0 0 24 24" width="18" height="18">
+            <path fill="currentColor" d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+          </svg>
+          Anterior
+        </button>
+      </div>
+      <h1 id="title" class="title">Calendario de Citas</h1>
+      <div class="nav-controls">
+        <button class="btn-nav" onclick="app.changeWeek(1)">
+          Siguiente
+          <svg viewBox="0 0 24 24" width="18" height="18">
+            <path fill="currentColor" d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+          </svg>
+        </button>
+      </div>
+      <div class="header-actions">
+        <span id="lastUpdate" class="last-update">Cargando...</span>
+        <button id="btnRefresh" class="btn-icon" onclick="app.manualRefresh()" title="Actualizar">
+          <svg viewBox="0 0 24 24" width="24" height="24">
+            <path fill="currentColor" d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Calendar Grid -->
+  <div id="gridWrapper" class="grid-wrapper">
+    <div id="week" class="calendar-grid"></div>
   </div>
-  <div class="week-grid-wrapper">
-    <div id="week" class="week-grid"></div>
+
+  <!-- Modal -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="app.closeModal()">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+        </svg>
+      </button>
+      <div id="modal-body"></div>
+    </div>
   </div>
-</div>
 
-<div class="modal" id="modal">
-  <div class="modal-content">
-    <span class="close" onclick="closeModal()">×</span>
-    <div id="modal-body"></div>
+  <!-- Loading -->
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="spinner"></div>
+    <p>Cargando...</p>
   </div>
-</div>
 
-<script>
-let currentWeek = dayjs().startOf('day');
-let citas = [];
-let draggedCita = null;
-const WEBHOOK_URL = 'https://webhook.arvera.es/webhook/citas';
-const CHECK_UPDATE_URL = 'https://webhook.arvera.es/webhook/check-update';
-const AGENDAR_URL = 'https://webhook.arvera.es/webhook/agendar';
-const RESERVA_URL = 'https://tureserva.com?hora=';
-const AUTO_REFRESH_INTERVAL = 2 * 60 * 1000; // 2 minutos
-
-// Verificar si hay actualizaciones nuevas
-async function verificarActualizaciones() {
-  try {
-    const res = await fetch(CHECK_UPDATE_URL);
-    if (res.ok) {
-      const data = await res.json();
-      const updatedAt = data.updatedAt;
-      const lastUpdate = sessionStorage.getItem('lastUpdate');
-      const citasYaCargadas = citas.length > 0; // Verificar si ya hay citas en memoria
-      
-      console.log('Verificando actualizaciones:', { 
-        nuevo: updatedAt, 
-        anterior: lastUpdate,
-        hayDiferencia: updatedAt !== lastUpdate,
-        citasEnMemoria: citas.length
-      });
-      
-      // Si es la primera carga de la sesión o no hay citas cargadas, cargar siempre
-      if (!lastUpdate || !citasYaCargadas) {
-        // Primera carga o recarga después de reload
-        console.log('Primera carga - cargando citas');
-        sessionStorage.setItem('lastUpdate', updatedAt);
-        await cargarCitas();
-      } else if (updatedAt && updatedAt !== lastUpdate) {
-        // Hay cambios - guardar primero y luego recargar
-        console.log('Cambios detectados - guardando nuevo timestamp y recargando');
-        sessionStorage.setItem('lastUpdate', updatedAt);
-        // Forzar recarga desde el servidor (sin cache)
-        setTimeout(() => {
-          location.reload(true);
-        }, 100);
-      } else {
-        // No hay cambios
-        console.log('No hay cambios. Última actualización:', updatedAt);
-        actualizarIndicadorSinCambios();
-      }
-    }
-  } catch(e) {
-    console.error('Error verificando actualizaciones:', e);
-    // Si falla la verificación, intentar cargar igual
-    await cargarCitas();
-  }
-}
-
-// Obtener citas desde el webhook
-async function cargarCitas() {
-  try {
-    console.log('Cargando citas desde:', WEBHOOK_URL);
-    const res = await fetch(WEBHOOK_URL);
-    citas = await res.json();
-    console.log('Citas cargadas:', citas.length, 'citas');
-    console.log('Primera cita:', citas[0]);
-    actualizarUltimaActualizacion();
-    render();
-  } catch(e) {
-    console.error('Error cargando citas:', e);
-    document.getElementById('lastUpdate').innerText = '❌ Error al cargar';
-  }
-}
-
-// Actualizar indicador sin cambios
-function actualizarIndicadorSinCambios() {
-  const ahora = dayjs().format('HH:mm:ss');
-  document.getElementById('lastUpdate').innerText = `✓ Sincronizado (sin cambios) - ${ahora}`;
-}
-
-// Actualizar indicador de última actualización
-function actualizarUltimaActualizacion() {
-  const ahora = dayjs().format('HH:mm:ss');
-  document.getElementById('lastUpdate').innerText = `Última actualización: ${ahora}`;
-}
-
-// Generar horas de citas
-function generarHoras() {
-  const horas = [];
-  const bloques = [['08:30','12:15'],['15:45','18:00']];
-  bloques.forEach(([i,f]) => {
-    let t = dayjs(`2000-01-01 ${i}`);
-    const end = dayjs(`2000-01-01 ${f}`);
-    while(t.isSameOrBefore(end)) {
-      horas.push(t.format('HH:mm'));
-      t = t.add(45,'minute');
-    }
-  });
-  return horas;
-}
-
-// Renderizar calendario
-function render() {
-  const endDate = currentWeek.add(6, 'day');
-  document.getElementById('title').innerText = `${currentWeek.format('D MMM YYYY')} - ${endDate.format('D MMM YYYY')}`;
-  const grid = document.getElementById('week');
-  grid.innerHTML = '';
-
-  // Cabeceras días
-  grid.appendChild(document.createElement('div'));
-  for(let d=0; d<7; d++){
-    const day = currentWeek.add(d,'day');
-    const h = document.createElement('div');
-    h.className='cell day-header';
-    h.innerText=day.format('ddd D');
-    grid.appendChild(h);
-  }
-
-  generarHoras().forEach(hora=>{
-    const timeCell = document.createElement('div');
-    timeCell.className='cell time';
-    timeCell.innerText=hora;
-    grid.appendChild(timeCell);
-
-    for(let d=0; d<7; d++){
-      const fecha = currentWeek.add(d,'day').format('YYYY-MM-DD');
-      const cita = citas.find(c => c.start === `${fecha} ${hora}`);
-
-      const cell = document.createElement('div');
-      cell.className='cell ' + (cita?'busy':'free');
-      cell.dataset.slot = `${fecha} ${hora}`;
-
-      // Drag & drop
-      cell.ondragover = e => { e.preventDefault(); cell.classList.add('drop-target'); };
-      cell.ondragleave = () => cell.classList.remove('drop-target');
-      cell.ondrop = () => {
-        if(draggedCita && !cita){
-          draggedCita.start = cell.dataset.slot;
-          render();
-        }
-      };
-
-      if(cita){
-        cell.draggable=true;
-        cell.innerHTML=`<strong>${cita.name}</strong><span>${cita.service}</span><span>${cita.modelo}</span><span>${cita.matricula}</span>`;
-        cell.ondragstart=()=>{ draggedCita=cita; cell.classList.add('dragging'); };
-        cell.ondragend=()=>{ draggedCita=null; cell.classList.remove('dragging'); };
-        cell.onclick=()=>openModal(`
-          <h3>${hora} - ${dayjs(cita.start).format('dddd')}</h3>
-          <p><b>Nombre:</b> ${cita.name}</p>
-          <p><b>Teléfono:</b> ${cita.phone}</p>
-          <p><b>Servicio:</b> ${cita.service}</p>
-          <p><b>Modelo:</b> ${cita.modelo}</p>
-          <p><b>Matrícula:</b> ${cita.matricula}</p>
-        `);
-      }else{
-        cell.onclick=()=>abrirFormularioAgendamiento(fecha, hora);
-      }
-
-      grid.appendChild(cell);
-    }
-  });
-}
-
-function changeWeek(offset){
-  currentWeek = currentWeek.add(offset * 7,'day');
-  render();
-}
-
-function openModal(html){
-  document.getElementById('modal-body').innerHTML=html;
-  document.getElementById('modal').style.display='flex';
-}
-
-function closeModal(){
-  document.getElementById('modal').style.display='none';
-}
-
-// Abrir formulario de agendamiento
-function abrirFormularioAgendamiento(fecha, hora) {
-  const fechaHora = dayjs(`${fecha} ${hora}`);
-  const endTime = fechaHora.add(45, 'minute');
-  
-  const formulario = `
-    <h3>Agendar Cita</h3>
-    <p style="color:#5f6368; margin-bottom:20px;">
-      ${fechaHora.format('dddd, D [de] MMMM YYYY - HH:mm')}
-    </p>
-    
-    <div id="mensajes"></div>
-    
-    <form id="formAgendamiento" onsubmit="enviarAgendamiento(event, '${fecha}', '${hora}')">
-      <div class="form-group">
-        <label for="nombre">Nombre completo *</label>
-        <input type="text" id="nombre" name="nombre" required>
-      </div>
-      
-      <div class="form-group">
-        <label for="telefono">Teléfono *</label>
-        <input type="tel" id="telefono" name="telefono" required placeholder="600 000 000" inputmode="tel">
-      </div>
-      
-      <div class="form-group">
-        <label>Servicio *</label>
-        <div class="checkbox-group">
-          <div class="checkbox-item">
-            <input type="checkbox" id="servicio-neumaticos" name="servicio" value="Neumáticos">
-            <label for="servicio-neumaticos">Neumáticos</label>
-          </div>
-          <div class="checkbox-item">
-            <input type="checkbox" id="servicio-alineacion" name="servicio" value="Alineación">
-            <label for="servicio-alineacion">Alineación</label>
-          </div>
-        </div>
-      </div>
-      
-      <div class="form-group">
-        <label for="matricula">Matrícula</label>
-        <input type="text" id="matricula" name="matricula" placeholder="1234ABC">
-      </div>
-      
-      <div class="form-group">
-        <label for="modelo">Modelo del vehículo</label>
-        <input type="text" id="modelo" name="modelo" placeholder="Ej: Seat León">
-      </div>
-      
-      <div class="form-group">
-        <label for="notes">Notas adicionales</label>
-        <textarea id="notes" name="notes" placeholder="Información adicional sobre la cita..."></textarea>
-      </div>
-      
-      <div class="form-actions">
-        <button type="button" class="btn-secondary" onclick="closeModal()">Cancelar</button>
-        <button type="submit" class="btn-primary" id="btnSubmit">Agendar Cita</button>
-      </div>
-    </form>
-  `;
-  
-  openModal(formulario);
-}
-
-// Enviar agendamiento al webhook
-async function enviarAgendamiento(event, fecha, hora) {
-  event.preventDefault();
-  
-  const btnSubmit = document.getElementById('btnSubmit');
-  const mensajes = document.getElementById('mensajes');
-  
-  // Deshabilitar botón
-  btnSubmit.disabled = true;
-  btnSubmit.textContent = 'Agendando...';
-  
-  // Limpiar mensajes
-  mensajes.innerHTML = '';
-  
-  try {
-    // Obtener servicios seleccionados
-    const serviciosSeleccionados = [];
-    if (document.getElementById('servicio-neumaticos').checked) {
-      serviciosSeleccionados.push('Neumáticos');
-    }
-    if (document.getElementById('servicio-alineacion').checked) {
-      serviciosSeleccionados.push('Alineación');
-    }
-    
-    // Validar que al menos un servicio esté seleccionado
-    if (serviciosSeleccionados.length === 0) {
-      mensajes.innerHTML = '<div class="error-message" style="display:block;">Por favor, selecciona al menos un servicio.</div>';
-      btnSubmit.disabled = false;
-      btnSubmit.textContent = 'Agendar Cita';
-      return;
-    }
-    
-    const fechaHora = dayjs(`${fecha} ${hora}`);
-    const endTime = fechaHora.add(45, 'minute');
-    
-    const datos = {
-      startTime: fechaHora.toISOString(),
-      endTime: endTime.toISOString(),
-      nombre: document.getElementById('nombre').value.trim(),
-      telefono: document.getElementById('telefono').value.trim(),
-      servicio: serviciosSeleccionados.join(', '),
-      matricula: document.getElementById('matricula').value.trim() || '',
-      modelo: document.getElementById('modelo').value.trim() || '',
-      notes: document.getElementById('notes').value.trim() || ''
-    };
-    
-    console.log('Enviando datos:', datos);
-    
-    const response = await fetch(AGENDAR_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(datos)
-    });
-    
-    if (response.ok) {
-      mensajes.innerHTML = '<div class="success-message" style="display:block;">¡Cita agendada exitosamente!</div>';
-      
-      // Esperar 1.5 segundos y recargar citas
-      setTimeout(async () => {
-        closeModal();
-        await verificarActualizaciones();
-      }, 1500);
-    } else {
-      const errorData = await response.text();
-      console.error('Error del servidor:', errorData);
-      throw new Error(errorData || 'Error al agendar la cita');
-    }
-  } catch (error) {
-    console.error('Error completo:', error);
-    const mensajeError = error.message || 'Error al agendar la cita. Por favor, intenta de nuevo.';
-    mensajes.innerHTML = `<div class="error-message" style="display:block;">${mensajeError}</div>`;
-    btnSubmit.disabled = false;
-    btnSubmit.textContent = 'Agendar Cita';
-  }
-}
-
-// Inicializar
-verificarActualizaciones();
-
-// Recarga automática cada 2 minutos (verifica primero si hay cambios)
-setInterval(verificarActualizaciones, AUTO_REFRESH_INTERVAL);
-</script>
+  <script>
+    dayjs.extend(window.dayjs_plugin_isSameOrBefore);
+    dayjs.locale('es');
+  </script>
+  <script src="app.js"></script>
 </body>
 </html>
