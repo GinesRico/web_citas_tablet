@@ -2,10 +2,7 @@
  * CONFIGURACIÓN
  ****************************************/
 const CONFIG = {
-  WEBHOOK_URL: 'https://webhook.arvera.es/webhook/citas',
-  CHECK_UPDATE_URL: 'https://webhook.arvera.es/webhook/check-update',
-  AGENDAR_URL: 'https://webhook.arvera.es/webhook/agendar',
-  LOCALES_URL: 'https://webhook.arvera.es/webhook/locales',
+  API_BASE_URL: 'https://api-citas-seven.vercel.app/api',
   AUTO_REFRESH_INTERVAL: 30 * 1000, // 30 segundos
   HORARIOS: [
     ['08:30', '12:15'],
@@ -128,85 +125,60 @@ class ApiService {
     }
   }
 
-  async getCitas() {
-    const res = await this.fetch(CONFIG.WEBHOOK_URL);
-    return await res.json();
-  }
-
-  async checkUpdate() {
-    const res = await this.fetch(CONFIG.CHECK_UPDATE_URL);
-    if (!res.ok) throw new Error('Error al verificar actualizaciones');
-    return await res.json();
+  async getCitas(startDate = null, endDate = null) {
+    let url = `${CONFIG.API_BASE_URL}/citas`;
+    if (startDate && endDate) {
+      url += `?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
+    }
+    const res = await this.fetch(url);
+    if (!res.ok) throw new Error('Error al obtener citas');
+    const data = await res.json();
+    
+    // Normalizar los datos de la API al formato esperado por la app
+    return data.map(cita => ({
+      id: cita.Id,
+      start: cita.startTime,
+      end: cita.endTime,
+      name: cita.Nombre,
+      phone: String(cita.Telefono || ''),
+      email: cita.Email || '',
+      service: cita.Servicio,
+      matricula: cita.Matricula || '',
+      modelo: cita.Modelo || '',
+      notes: cita.Notas || '',
+      estado: cita.Estado,
+      cancelToken: cita.CancelToken
+    }));
   }
 
   async agendarCita(datos) {
-    const res = await this.fetch(CONFIG.AGENDAR_URL, {
+    const res = await this.fetch(`${CONFIG.API_BASE_URL}/citas`, {
       method: 'POST',
+      body: JSON.stringify({
+        Nombre: datos.name,
+        Telefono: datos.phone,
+        Email: datos.email || '',
+        Servicio: datos.service,
+        startTime: datos.start,
+        endTime: datos.end,
+        Matricula: datos.matricula || '',
+        Modelo: datos.modelo || '',
+        Notas: datos.notes || ''
+      })
+    });
+    return res;
+  }
+
+  async actualizarCita(citaId, datos) {
+    const res = await this.fetch(`${CONFIG.API_BASE_URL}/citas/${citaId}`, {
+      method: 'PUT',
       body: JSON.stringify(datos)
     });
     return res;
   }
 
-  async getCitasLocales() {
-    try {
-      const res = await this.fetch(CONFIG.LOCALES_URL);
-      if (!res.ok) {
-        console.log('Webhook locales no disponible (esperado si no está configurado)');
-        return [];
-      }
-      const data = await res.json();
-      
-      // Si es un objeto único, convertirlo a array
-      let citasArray = [];
-      if (Array.isArray(data)) {
-        citasArray = data;
-        console.log(`Webhook devolvió array con ${data.length} cita(s)`);
-      } else if (data && typeof data === 'object') {
-        // Es un objeto único, envolverlo en array
-        citasArray = [data];
-        console.log('Webhook devolvió objeto único, convertido a array');
-      } else {
-        console.warn('Webhook locales devolvió formato inesperado:', data);
-        return [];
-      }
-      
-      // Normalizar campos (telefono → phone, servicio → service, etc.)
-      const citasNormalizadas = citasArray.map(cita => ({
-        id: cita.id,
-        start: cita.start,
-        end: cita.end,
-        name: cita.name,
-        phone: String(cita.phone || cita.telefono || ''),
-        service: cita.service || cita.servicio || '',
-        matricula: cita.matricula || '',
-        modelo: cita.modelo || '',
-        notes: cita.notes || ''
-      }));
-      
-      console.log(`✓ Citas locales normalizadas: ${citasNormalizadas.length}`, citasNormalizadas.map(c => ({
-        name: c.name,
-        start: c.start,
-        phone: c.phone
-      })));
-      
-      return citasNormalizadas;
-      
-    } catch (error) {
-      console.log('Error obteniendo citas locales (esperado si webhook no existe):', error.message);
-      return [];
-    }
-  }
-
-  async agendarCitaLocal(datos) {
-    const res = await this.fetch(CONFIG.LOCALES_URL, {
-      method: 'POST',
-      body: JSON.stringify(datos)
-    });
-    return res;
-  }
-
-  async eliminarCitaLocal(citaId) {
-    const res = await this.fetch(`${CONFIG.LOCALES_URL}/${citaId}`, {
+  async eliminarCita(citaId) {
+    const res = await this.fetch(`${CONFIG.API_BASE_URL}/citas/${citaId}`, {
       method: 'DELETE'
     });
     return res;
@@ -640,87 +612,33 @@ class CalendarioApp {
 
   async verificarActualizaciones() {
     try {
-      const data = await this.api.checkUpdate();
-      const updatedAt = data.updatedAt;
-      const lastUpdate = this.storage.get('lastUpdate');
-      const citasYaCargadas = this.citas.length > 0;
-      
-      console.log('Verificando actualizaciones:', { 
-        nuevo: updatedAt, 
-        anterior: lastUpdate,
-        hayDiferencia: updatedAt !== lastUpdate,
-        citasEnMemoria: this.citas.length
-      });
-      
-      if (!lastUpdate || !citasYaCargadas) {
-        console.log('Primera carga - cargando citas');
-        this.storage.set('lastUpdate', updatedAt);
-        await this.cargarCitas();
-      } else if (updatedAt && updatedAt !== lastUpdate) {
-        console.log('Cambios detectados - guardando y recargando');
-        this.storage.set('lastUpdate', updatedAt);
-        setTimeout(() => location.reload(true), 100);
-      } else {
-        console.log('No hay cambios');
-        this.ui.setLastUpdate(`✓ Sincronizado - ${dayjs().format('HH:mm:ss')}`);
-      }
+      console.log('Cargando citas desde API');
+      await this.cargarCitas();
+      this.ui.setLastUpdate(`✓ Sincronizado - ${dayjs().format('HH:mm:ss')}`);
     } catch(e) {
       console.error('Error verificando actualizaciones:', e);
-      await this.cargarCitas();
+      this.ui.setLastUpdate('⚠️ Error al sincronizar');
     }
   }
 
   async cargarCitas() {
     try {
       console.log('Cargando citas desde API');
-      const [citasAPI, citasLocalesRaw] = await Promise.all([
-        this.api.getCitas(),
-        this.api.getCitasLocales()
-      ]);
+      const citas = await this.api.getCitas();
       
-      // Validar que citasAPI sea un array
-      const citasAPIArray = Array.isArray(citasAPI) ? citasAPI : [];
+      // Validar que sea un array
+      this.citas = Array.isArray(citas) ? citas : [];
       
-      // Validar que citasLocales sea un array
-      const citasLocalesArray = Array.isArray(citasLocalesRaw) ? citasLocalesRaw : [];
-      
-      console.log('Debug - Tipos recibidos:', {
-        citasAPI: typeof citasAPI,
-        isArrayAPI: Array.isArray(citasAPI),
-        citasLocales: typeof citasLocalesRaw,
-        isArrayLocales: Array.isArray(citasLocalesRaw)
-      });
-      
-      // Marcar citas locales
-      const citasLocalesMarked = citasLocalesArray.map(c => ({ ...c, isLocal: true }));
-      
-      // Mezclar citas del API con citas locales
-      this.citas = [...citasAPIArray, ...citasLocalesMarked];
-      
-      console.log('Citas cargadas:', {
-        api: citasAPIArray.length,
-        locales: citasLocalesArray.length,
-        total: this.citas.length
-      });
+      console.log('Citas cargadas:', this.citas.length);
       
       this.ui.setLastUpdate(`Última actualización: ${dayjs().format('HH:mm:ss')}`);
       this.render();
     } catch(e) {
       console.error('Error cargando citas:', e);
-      // Intentar cargar solo citas locales en caso de error
-      try {
-        const citasLocalesRaw = await this.api.getCitasLocales();
-        const citasLocalesArray = Array.isArray(citasLocalesRaw) ? citasLocalesRaw : [];
-        this.citas = citasLocalesArray.map(c => ({ ...c, isLocal: true }));
-        this.ui.setLastUpdate('⚠️ Modo local');
-        this.render();
-      } catch (err) {
-        console.error('Error en fallback:', err);
-        this.citas = [];
-        this.ui.setLastUpdate('❌ Error al cargar');
-        this.ui.showError('Error al cargar las citas');
-        this.render();
-      }
+      this.citas = [];
+      this.ui.setLastUpdate('❌ Error al cargar');
+      this.ui.showError('Error al cargar las citas');
+      this.render();
     }
   }
 
@@ -901,11 +819,32 @@ class CalendarioApp {
       cell.classList.remove('drop-target');
     };
     
-    cell.ondrop = () => {
+    cell.ondrop = async () => {
       cell.classList.remove('drop-target');
       if (this.draggedCita) {
-        this.draggedCita.start = cell.dataset.slot;
-        this.render();
+        const nuevaFechaHora = dayjs(cell.dataset.slot);
+        const nuevaEndTime = nuevaFechaHora.add(CONFIG.DURACION_CITA, 'minute');
+        
+        try {
+          // Actualizar en la API
+          const response = await this.api.actualizarCita(this.draggedCita.id, {
+            startTime: nuevaFechaHora.toISOString(),
+            endTime: nuevaEndTime.toISOString()
+          });
+          
+          if (response.ok) {
+            // Actualizar localmente
+            this.draggedCita.start = nuevaFechaHora.toISOString();
+            this.draggedCita.end = nuevaEndTime.toISOString();
+            this.render();
+          } else {
+            console.error('Error al actualizar la cita');
+            alert('Error al mover la cita');
+          }
+        } catch (error) {
+          console.error('Error moviendo cita:', error);
+          alert('Error al mover la cita');
+        }
       }
     };
     
@@ -913,23 +852,22 @@ class CalendarioApp {
   }
 
   mostrarDetalleCita(cita, hora) {
-    const esLocal = cita.isLocal || false;
-    const badgeLocal = esLocal ? '<span style="background:#f9ab00;color:white;padding:4px 8px;border-radius:12px;font-size:11px;font-weight:500;margin-left:8px;">LOCAL</span>' : '';
-    const botonEliminar = esLocal ? `
+    const botonEliminar = `
       <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border-color);">
-        <button class="btn-secondary" onclick="app.eliminarCitaLocal('${cita.id}')" style="background:#fce8e6;color:#c5221f;border-color:#c5221f;width:100%;">
+        <button class="btn-secondary" onclick="app.eliminarCita('${cita.id}')" style="background:#fce8e6;color:#c5221f;border-color:#c5221f;width:100%;">
           <svg viewBox="0 0 24 24" width="18" height="18" style="display:inline-block;vertical-align:middle;margin-right:4px;">
             <path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
           </svg>
-          Eliminar cita local
+          Eliminar cita
         </button>
       </div>
-    ` : '';
+    `;
     
     const html = `
-      <h3>${hora} - ${dayjs(cita.start).format('dddd')}${badgeLocal}</h3>
+      <h3>${hora} - ${dayjs(cita.start).format('dddd')}</h3>
       <p><b>Nombre:</b> ${cita.name}</p>
       <p><b>Teléfono:</b> <a href="tel:${cita.phone}" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">${cita.phone}</a></p>
+      ${cita.email ? `<p><b>Email:</b> ${cita.email}</p>` : ''}
       <p><b>Servicio:</b> ${cita.service}</p>
       ${cita.modelo ? `<p><b>Modelo:</b> ${cita.modelo}</p>` : ''}
       ${cita.matricula ? `<p><b>Matrícula:</b> ${cita.matricula}</p>` : ''}
@@ -939,10 +877,10 @@ class CalendarioApp {
     this.ui.showModal(html);
   }
 
-  async eliminarCitaLocal(citaId) {
-    if (confirm('¿Eliminar esta cita local?')) {
+  async eliminarCita(citaId) {
+    if (confirm('¿Eliminar esta cita?')) {
       try {
-        const response = await this.api.eliminarCitaLocal(citaId);
+        const response = await this.api.eliminarCita(citaId);
         if (response.ok) {
           this.closeModal();
           await this.cargarCitas();
@@ -950,7 +888,7 @@ class CalendarioApp {
           alert('Error al eliminar la cita');
         }
       } catch (error) {
-        console.error('Error eliminando cita local:', error);
+        console.error('Error eliminando cita:', error);
         alert('Error al eliminar la cita');
       }
     }
@@ -1016,6 +954,11 @@ class CalendarioApp {
             <input type="tel" id="telefono" name="telefono" required placeholder="600 123 456" inputmode="tel" style="flex:1;">
           </div>
           <small style="color:var(--text-secondary);font-size:12px;margin-top:4px;display:block;">Introduce solo el número sin prefijo</small>
+        </div>
+        
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="cliente@ejemplo.com">
         </div>
         
         <div class="form-group">
@@ -1091,64 +1034,34 @@ class CalendarioApp {
       
       const fechaHora = dayjs(`${fecha} ${hora}`);
       const endTime = fechaHora.add(CONFIG.DURACION_CITA, 'minute');
-      const hoy = dayjs().format('YYYY-MM-DD');
-      const fechaCita = fechaHora.format('YYYY-MM-DD');
-      const esMismoDia = fechaCita === hoy;
       
       const datos = {
         start: fechaHora.toISOString(),
         end: endTime.toISOString(),
         name: document.getElementById('nombre').value.trim(),
         phone: telefonoCompleto,
+        email: document.getElementById('email')?.value.trim() || '',
         service: servicios.join(', '),
         matricula: document.getElementById('matricula').value.trim() || '',
         modelo: document.getElementById('modelo').value.trim() || '',
         notes: document.getElementById('notes').value.trim() || ''
       };
       
-      console.log('Datos a enviar:', { ...datos, phone: telefonoCompleto });
+      console.log('Datos a enviar:', datos);
       
-      if (esMismoDia) {
-        // Enviar al webhook de citas locales (sincronizado entre dispositivos)
-        console.log('Guardando cita local en webhook (mismo día):', datos);
-        const response = await this.api.agendarCitaLocal(datos);
-        
-        if (response.ok) {
-          mensajes.innerHTML = '<div class="success-message" style="display:block;">✓ Cita agendada (mismo día - sincronizada)</div>';
-          setTimeout(async () => {
-            this.closeModal();
-            await this.cargarCitas();
-          }, 1500);
-        } else {
-          throw new Error('Error al guardar la cita local');
-        }
+      // Enviar a la API unificada
+      const response = await this.api.agendarCita(datos);
+      
+      if (response.ok) {
+        mensajes.innerHTML = '<div class="success-message" style="display:block;">✓ Cita agendada correctamente</div>';
+        setTimeout(async () => {
+          this.closeModal();
+          await this.cargarCitas();
+        }, 1500);
       } else {
-        // Enviar a Cal.com (fecha futura)
-        console.log('Enviando a Cal.com (fecha futura):', datos);
-        const datosAPI = {
-          startTime: datos.start,
-          endTime: datos.end,
-          nombre: datos.name,
-          telefono: datos.phone,
-          servicio: datos.service,
-          matricula: datos.matricula,
-          modelo: datos.modelo,
-          notes: datos.notes
-        };
-        
-        const response = await this.api.agendarCita(datosAPI);
-        
-        if (response.ok) {
-          mensajes.innerHTML = '<div class="success-message" style="display:block;">¡Cita agendada en Cal.com!</div>';
-          setTimeout(async () => {
-            this.closeModal();
-            await this.verificarActualizaciones();
-          }, 1500);
-        } else {
-          const errorData = await response.text();
-          console.error('Error del servidor:', errorData);
-          throw new Error(errorData || 'Error al agendar la cita');
-        }
+        const errorData = await response.text();
+        console.error('Error del servidor:', errorData);
+        throw new Error(errorData || 'Error al agendar la cita');
       }
     } catch (error) {
       console.error('Error completo:', error);
