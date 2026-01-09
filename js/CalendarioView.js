@@ -22,65 +22,93 @@ class CalendarioView {
       this.app.currentWeek,
       CONFIG.DIAS_LABORABLES
     );
-    const horarios = this.app.horarioService.generar();
     
     const primerDia = diasLaborables[0];
     const ultimoDia = diasLaborables[diasLaborables.length - 1];
     
     this.app.ui.setTitle(`${primerDia.format('D MMM YYYY')} - ${ultimoDia.format('D MMM YYYY')}`);
     
-    // Renderizar headers de días
-    this.renderDayHeaders(diasLaborables);
+    // Detectar si es móvil y usar renderizado apropiado
+    const isMobile = window.innerWidth <= 768;
     
-    // Renderizar grid de celdas
-    this.renderGrid(diasLaborables, horarios);
+    if (isMobile) {
+      this.renderMobile(diasLaborables);
+    } else {
+      this.renderDesktop(diasLaborables);
+    }
     
     // Actualizar mini calendario
     this.app.miniCalendar.render(this.app.currentWeek);
   }
 
   /**
-   * Renderiza los headers de los días
+   * Renderiza vista desktop (grid horizontal)
    */
-  renderDayHeaders(diasLaborables) {
+  renderDesktop(diasLaborables) {
     const grid = this.container;
+    const hoy = dayjs().format('YYYY-MM-DD');
+    const horarios = this.app.horarioService.generar();
     
     // Celda vacía para la columna de horas
-    const emptyCell = document.createElement('div');
-    emptyCell.className = 'time';
-    grid.appendChild(emptyCell);
+    grid.appendChild(document.createElement('div'));
     
-    // Headers de días
+    // Cabeceras de días
     diasLaborables.forEach(day => {
-      const header = document.createElement('div');
-      header.className = 'day-header';
-      header.innerHTML = `
-        <div class="day-name">${day.format('ddd')}</div>
-        <div class="day-number">${day.format('D')}</div>
-      `;
-      grid.appendChild(header);
+      const h = document.createElement('div');
+      h.className = 'cell day-header';
+      if (day.format('YYYY-MM-DD') === hoy) {
+        h.classList.add('today');
+      }
+      h.innerText = day.format('ddd D');
+      grid.appendChild(h);
+    });
+
+    // Generar horarios y celdas
+    horarios.forEach(hora => {
+      const timeCell = document.createElement('div');
+      timeCell.className = 'cell time';
+      timeCell.innerText = hora;
+      grid.appendChild(timeCell);
+
+      diasLaborables.forEach(day => {
+        const fecha = day.format('YYYY-MM-DD');
+        const cita = this.buscarCitaEnSlot(fecha, hora);
+        const cell = this.createCell(fecha, hora, cita);
+        grid.appendChild(cell);
+      });
     });
   }
 
   /**
-   * Renderiza la grilla de celdas
+   * Renderiza vista móvil (vertical por día)
    */
-  renderGrid(diasLaborables, horarios) {
+  renderMobile(diasLaborables) {
     const grid = this.container;
+    const hoy = dayjs().format('YYYY-MM-DD');
+    const horarios = this.app.horarioService.generar();
     
-    horarios.forEach(hora => {
-      // Celda de hora
-      const timeCell = document.createElement('div');
-      timeCell.className = 'time';
-      timeCell.innerHTML = `<span class="time-label">${hora}</span>`;
-      grid.appendChild(timeCell);
+    // Para cada día, crear un bloque vertical
+    diasLaborables.forEach(day => {
+      const fecha = day.format('YYYY-MM-DD');
       
-      // Celdas de cada día
-      diasLaborables.forEach(day => {
-        const fecha = day.format('YYYY-MM-DD');
-        const fechaHoraSlot = `${fecha} ${hora}`;
-        
-        // Buscar cita en este slot
+      // Cabecera del día
+      const dayHeader = document.createElement('div');
+      dayHeader.className = 'cell day-header';
+      if (fecha === hoy) {
+        dayHeader.classList.add('today');
+      }
+      dayHeader.innerText = day.format('dddd D [de] MMMM');
+      grid.appendChild(dayHeader);
+
+      // Horarios de este día
+      horarios.forEach(hora => {
+        // Celda de hora
+        const timeCell = document.createElement('div');
+        timeCell.className = 'cell time';
+        timeCell.innerText = hora;
+        grid.appendChild(timeCell);
+
+        // Celda de cita
         const cita = this.buscarCitaEnSlot(fecha, hora);
         const cell = this.createCell(fecha, hora, cita);
         grid.appendChild(cell);
@@ -112,23 +140,15 @@ class CalendarioView {
   createCell(fecha, hora, cita) {
     const cell = document.createElement('div');
     const fechaHora = `${fecha} ${hora}`;
-    
     cell.dataset.slot = fechaHora;
     
     if (cita) {
       cell.className = 'cell busy';
       cell.draggable = true;
       cell.innerHTML = `
-        <div class="cita-info">
-          <div class="cita-nombre">${cita.name}</div>
-          <div class="cita-servicio">${cita.service}</div>
-          ${cita.phone ? `<div class="cita-telefono">${cita.phone}</div>` : ''}
-        </div>
-        <button class="btn-eliminar" title="Eliminar cita">
-          <svg viewBox="0 0 24 24" width="16" height="16">
-            <path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-          </svg>
-        </button>
+        <strong>${cita.name}</strong>
+        <span>${cita.service}</span>
+        ${cita.phone ? `<span>${cita.phone}</span>` : ''}
       `;
       
       // Drag events
@@ -138,19 +158,28 @@ class CalendarioView {
       };
       
       cell.ondragend = () => {
+        this.draggedCita = null;
         cell.classList.remove('dragging');
       };
       
-      // Click en botón eliminar
-      const btnEliminar = cell.querySelector('.btn-eliminar');
-      btnEliminar.onclick = (e) => {
-        e.stopPropagation();
-        this.eliminarCita(cita);
+      // Click para ver detalles
+      cell.onclick = () => {
+        this.app.mostrarDetalleCita(cita, hora);
       };
       
     } else {
       cell.className = 'cell free';
-      cell.innerHTML = `<span class="time-label">${hora}</span>`;
+      
+      // Mostrar hora en la celda vacía
+      const timeLabel = document.createElement('span');
+      timeLabel.className = 'time-label';
+      timeLabel.textContent = hora;
+      cell.appendChild(timeLabel);
+      
+      // Click para agendar nueva cita
+      cell.onclick = () => {
+        this.app.abrirFormularioAgendamiento(fecha, hora);
+      };
     }
     
     // Drop events (todas las celdas pueden recibir drops)
@@ -167,13 +196,6 @@ class CalendarioView {
       cell.classList.remove('drop-target');
       if (this.draggedCita) {
         await this.moverCita(this.draggedCita, fechaHora);
-      }
-    };
-    
-    // Click para agendar
-    cell.onclick = () => {
-      if (!cita) {
-        this.app.abrirFormularioAgendamiento(fecha, hora);
       }
     };
     

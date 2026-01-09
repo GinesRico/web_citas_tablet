@@ -664,53 +664,8 @@ class CalendarioApp {
   }
 
   render() {
-    // Generar días laborables
-    const diasLaborables = this.diasLaborablesService.generarDiasLaborables(
-      this.currentWeek, 
-      CONFIG.DIAS_LABORABLES
-    );
-    
-    const primerDia = diasLaborables[0];
-    const ultimoDia = diasLaborables[diasLaborables.length - 1];
-    
-    // Debug: ver qué rango de fechas mostramos
-    console.log('📅 Calendario mostrando del', primerDia.format('YYYY-MM-DD'), 'al', ultimoDia.format('YYYY-MM-DD'));
-    
-    // Debug: contar citas en este rango
-    const citasEnRango = this.citas.filter(c => {
-      if (!c.start) return false;
-      const fechaCita = dayjs.utc(c.start).tz(CONFIG.TIMEZONE).format('YYYY-MM-DD');
-      return fechaCita >= primerDia.format('YYYY-MM-DD') && fechaCita <= ultimoDia.format('YYYY-MM-DD');
-    });
-    console.log('📊 Citas en el rango visible:', citasEnRango.length);
-    if (citasEnRango.length > 0) {
-      console.log('  Ejemplos:', citasEnRango.slice(0, 3).map(c => ({
-        nombre: c.name,
-        fecha: dayjs.utc(c.start).tz(CONFIG.TIMEZONE).format('YYYY-MM-DD HH:mm')
-      })));
-    }
-    
-    this.ui.setTitle(`${primerDia.format('D MMM YYYY')} - ${ultimoDia.format('D MMM YYYY')}`);
-    
-    const grid = document.getElementById('week');
-    grid.innerHTML = '';
-
-    // Detectar si es móvil
-    const isMobile = window.innerWidth <= 768;
-
-    if (isMobile) {
-      // Renderizado vertical para móvil
-      this.renderMobile(grid, diasLaborables);
-    } else {
-      // Renderizado horizontal para tablet/desktop
-      this.renderDesktop(grid, diasLaborables);
-    }
-
-    // Actualizar mini calendario y estadísticas (solo en desktop)
-    if (window.innerWidth >= 1200) {
-      this.miniCalendar.render();
-      this.estadisticas.render();
-    }
+    // Delegar al CalendarioView
+    this.viewManager.calendarioView.render();
   }
 
   renderDesktop(grid, diasLaborables) {

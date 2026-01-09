@@ -17,6 +17,7 @@ class ViewManager {
   cambiarVista(vista) {
     if (this.vistaActual === vista) return;
     
+    const prevVista = this.vistaActual;
     this.vistaActual = vista;
     
     // Actualizar tabs activos
@@ -31,12 +32,15 @@ class ViewManager {
     vistaCalendario.classList.toggle('active', vista === 'calendario');
     vistaSlots.classList.toggle('active', vista === 'slots');
     
-    // Renderizar vista activa para sincronizar rangos de fecha
+    // Solo renderizar la nueva vista si no se ha renderizado antes
+    // o si cambiamos el rango de fechas
     if (vista === 'slots') {
-      this.slotsView.render();
-    } else if (vista === 'calendario') {
-      this.calendarioView.render();
+      // Solo render si viene de calendario (primera vez o cambio de rango)
+      if (prevVista === 'calendario') {
+        this.slotsView.render();
+      }
     }
+    // Para calendario no es necesario re-render, ya está renderizado
   }
 
   /**
