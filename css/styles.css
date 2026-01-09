@@ -855,7 +855,8 @@ body.device-mobile .sidebar {
    RESPONSIVE
    ========================================== */
 
-@media (max-width: 1366px) {
+@media (max-width: 1024px) {
+  /* Ocultar sidebar en tablets */
   .sidebar {
     display: none !important;
   }
@@ -867,9 +868,7 @@ body.device-mobile .sidebar {
   .vista-container {
     width: 100% !important;
   }
-}
 
-@media (max-width: 1024px) {
   .grid-wrapper {
     padding: 0;
   }
