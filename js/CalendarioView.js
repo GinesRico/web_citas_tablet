@@ -216,9 +216,8 @@ class CalendarioView {
       });
       
       if (response.ok) {
-        cita.start = nuevaFechaHora.toISOString();
-        cita.end = nuevaEndTime.toISOString();
-        this.render();
+        // Recargar citas desde API para tener datos frescos
+        await this.app.cargarCitas();
       } else {
         console.error('Error al actualizar la cita');
         alert('Error al mover la cita');
@@ -240,7 +239,6 @@ class CalendarioView {
       
       if (response.ok) {
         await this.app.cargarCitas();
-        this.render();
       } else {
         alert('Error al eliminar la cita');
       }

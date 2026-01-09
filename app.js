@@ -2,8 +2,12 @@
  * CONFIGURACIÓN GLOBAL
  ****************************************/
 const CONFIG = {
+  // API REST
   API_BASE_URL: 'https://api-citas-seven.vercel.app/api',
-  AUTO_REFRESH_INTERVAL: 30 * 1000, // 30 segundos
+  
+  // Supabase Realtime (sincronización instantánea)
+  SUPABASE_URL: 'https://pvvxwibhqowjcdxazalx.supabase.co',
+  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB2dnh3aWJocW93amNkeGF6YWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzYzNTY4MjIsImV4cCI6MjA1MTkzMjgyMn0.RJLCqGTiNx-bQFa8tXrM1B9j6wqP8wCEA7xGI1vPw4I',
   
   // TIMEZONE: Zona horaria para todas las operaciones
   TIMEZONE: 'Europe/Madrid',
@@ -574,20 +578,50 @@ class CalendarioApp {
     // Detectar y aplicar clases de dispositivo
     this.deviceInfo = DeviceDetectionService.applyDeviceClasses();
     
-    // Auto-refresh interval
-    this.refreshInterval = null;
-    
     // Gestor de vistas (calendario y slots)
     this.viewManager = new ViewManager(this);
+    
+    // Inicializar cliente de Supabase para Realtime
+    this.supabase = window.supabase.createClient(
+      CONFIG.SUPABASE_URL,
+      CONFIG.SUPABASE_ANON_KEY
+    );
+    this.realtimeChannel = null;
     
     this.init();
   }
 
   async init() {
     await this.verificarActualizaciones();
-    this.startAutoRefresh();
+    // Configurar sincronización en tiempo real con Supabase
+    this.setupRealtimeSubscription();
     this.setupOrientationListener();
     this.setupTabsListener();
+    this.setupVisibilityListener();
+  }
+
+  setupRealtimeSubscription() {
+    // Crear canal de Supabase Realtime
+    this.realtimeChannel = this.supabase
+      .channel('citas-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'citas'
+        },
+        (payload) => {
+          console.log('🔄 Cambio detectado en tiempo real:', payload.eventType);
+          // Actualizar cuando hay cambios en la base de datos
+          this.verificarActualizaciones();
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Supabase Realtime conectado');
+        }
+      });
   }
 
   setupTabsListener() {
@@ -599,6 +633,22 @@ class CalendarioApp {
         if (vista) {
           this.cambiarVista(vista);
         }
+      }
+    });
+  }
+
+  setupVisibilityListener() {
+    // Pausar/reanudar Realtime según visibilidad de la pestaña
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        // Desconectar Realtime cuando la pestaña está oculta (ahorra recursos)
+        if (this.realtimeChannel) {
+          this.realtimeChannel.unsubscribe();
+        }
+      } else {
+        // Reconectar y actualizar inmediatamente cuando vuelve
+        this.verificarActualizaciones();
+        this.setupRealtimeSubscription();
       }
     });
   }
@@ -620,13 +670,6 @@ class CalendarioApp {
       
       currentWidth = newWidth;
     });
-  }
-
-  startAutoRefresh() {
-    if (this.refreshInterval) clearInterval(this.refreshInterval);
-    this.refreshInterval = setInterval(() => {
-      this.verificarActualizaciones();
-    }, CONFIG.AUTO_REFRESH_INTERVAL);
   }
 
   async verificarActualizaciones() {
@@ -851,13 +894,16 @@ class CalendarioApp {
   }
 
   mostrarDetalleCita(cita, hora) {
-    const botonEliminar = `
-      <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border-color);">
-        <button class="btn-secondary" onclick="app.eliminarCita('${cita.id}')" style="background:#fce8e6;color:#c5221f;border-color:#c5221f;width:100%;">
-          <svg viewBox="0 0 24 24" width="18" height="18" style="display:inline-block;vertical-align:middle;margin-right:4px;">
-            <path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-          </svg>
-          Eliminar cita
+    const botonesAccion = `
+      <div class="cita-acciones" style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border-color);display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn-accion btn-accion-llamar" onclick="window.location.href='tel:${cita.phone}'" title="Llamar">
+          <span class="material-icons">phone</span>
+        </button>
+        <button class="btn-accion btn-accion-modificar" onclick="app.modificarCita('${cita.id}')" title="Modificar">
+          <span class="material-icons">edit</span>
+        </button>
+        <button class="btn-accion btn-accion-eliminar" onclick="app.eliminarCita('${cita.id}')" title="Eliminar">
+          <span class="material-icons">delete</span>
         </button>
       </div>
     `;
@@ -871,7 +917,7 @@ class CalendarioApp {
       ${cita.modelo ? `<p><b>Modelo:</b> ${cita.modelo}</p>` : ''}
       ${cita.matricula ? `<p><b>Matrícula:</b> ${cita.matricula}</p>` : ''}
       ${cita.notes ? `<p><b>Notas:</b> ${cita.notes}</p>` : ''}
-      ${botonEliminar}
+      ${botonesAccion}
     `;
     this.ui.showModal(html);
   }
@@ -891,6 +937,12 @@ class CalendarioApp {
         alert('Error al eliminar la cita');
       }
     }
+  }
+
+  modificarCita(citaId) {
+    // TODO: Implementar modificación de cita
+    alert('Funcionalidad de modificación próximamente');
+    console.log('Modificar cita:', citaId);
   }
 
   abrirFormularioAgendamiento(fecha, hora) {

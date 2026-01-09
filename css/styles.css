@@ -196,6 +196,58 @@ body {
   background: #f8f9fa;
 }
 
+/* Botones de acción (llamar, modificar, eliminar) */
+.btn-accion {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+}
+
+.btn-accion .material-icons {
+  font-size: 20px;
+  color: var(--text-secondary);
+}
+
+.btn-accion:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.btn-accion-llamar:hover {
+  background: #e3f2fd;
+  border-color: #1976d2;
+}
+
+.btn-accion-llamar:hover .material-icons {
+  color: #1976d2;
+}
+
+.btn-accion-modificar:hover {
+  background: #fff3e0;
+  border-color: #f57c00;
+}
+
+.btn-accion-modificar:hover .material-icons {
+  color: #f57c00;
+}
+
+.btn-accion-eliminar:hover {
+  background: #fce8e6;
+  border-color: #c5221f;
+}
+
+.btn-accion-eliminar:hover .material-icons {
+  color: #c5221f;
+}
+
 /* ==========================================
    MAIN CONTENT LAYOUT
    ========================================== */
@@ -1047,6 +1099,10 @@ body.device-mobile .sidebar {
   text-align: center;
   border-bottom: 2px solid var(--border-color);
   margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .dia-nombre-corto {
@@ -1054,6 +1110,44 @@ body.device-mobile .sidebar {
   font-weight: 600;
   color: var(--text-secondary);
   letter-spacing: 0.5px;
+}
+
+/* Botón copiar horarios */
+.btn-copiar-horarios {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 4px 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.btn-copiar-horarios .material-icons {
+  font-size: 18px;
+  color: var(--text-secondary);
+}
+
+.btn-copiar-horarios:hover {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  transform: scale(1.1);
+}
+
+.btn-copiar-horarios:hover .material-icons {
+  color: white;
+}
+
+.btn-copiar-horarios.copiado {
+  background: #4caf50;
+  border-color: #4caf50;
+}
+
+.btn-copiar-horarios.copiado .material-icons {
+  color: white;
 }
 
 /* Lista vertical de slots */

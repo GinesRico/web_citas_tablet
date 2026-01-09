@@ -143,7 +143,18 @@ class SlotsView {
     diaNombre.className = 'dia-nombre-corto';
     diaNombre.textContent = dia.format('ddd D').toUpperCase(); // LUN 12
     
+    // Botón copiar horarios
+    const btnCopiar = document.createElement('button');
+    btnCopiar.className = 'btn-copiar-horarios';
+    btnCopiar.innerHTML = '<span class="material-icons">content_copy</span>';
+    btnCopiar.title = 'Copiar horarios disponibles';
+    btnCopiar.onclick = (e) => {
+      e.stopPropagation();
+      this.copiarHorarios(dia, slots, btnCopiar);
+    };
+    
     header.appendChild(diaNombre);
+    header.appendChild(btnCopiar);
     diaDiv.appendChild(header);
     
     // Lista vertical de slots
@@ -170,6 +181,43 @@ class SlotsView {
     diaDiv.appendChild(slotsList);
     
     return diaDiv;
+  }
+
+  /**
+   * Copia los horarios disponibles al portapapeles
+   */
+  async copiarHorarios(dia, slots, btnElement) {
+    // Obtener nombre del día en español
+    const nombreDia = dia.locale('es').format('dddd D [de] MMMM');
+    
+    // Ordenar y convertir slots a hora local
+    const horasDisponibles = slots
+      .map(slot => dayjs.utc(slot.startTime).tz(CONFIG.TIMEZONE).format('HH:mm'))
+      .sort();
+    
+    // Generar texto con horas en vertical
+    const horasFormateadas = horasDisponibles.map(h => `- ${h}`).join('\n');
+    const texto = `Las citas disponibles para el día ${nombreDia} son las siguientes:\n${horasFormateadas}`;
+    
+    try {
+      await navigator.clipboard.writeText(texto);
+      
+      // Feedback visual
+      const iconoOriginal = btnElement.innerHTML;
+      btnElement.innerHTML = '<span class="material-icons">check</span>';
+      btnElement.classList.add('copiado');
+      
+      setTimeout(() => {
+        btnElement.innerHTML = iconoOriginal;
+        btnElement.classList.remove('copiado');
+      }, 2000);
+    } catch (err) {
+      console.error('Error al copiar:', err);
+      btnElement.innerHTML = '<span class="material-icons">error</span>';
+      setTimeout(() => {
+        btnElement.innerHTML = '<span class="material-icons">content_copy</span>';
+      }, 2000);
+    }
   }
 
   /**
