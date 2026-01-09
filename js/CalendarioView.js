@@ -37,9 +37,6 @@ class CalendarioView {
     
     // Actualizar mini calendario
     this.app.miniCalendar.render(this.app.currentWeek);
-    
-    // Actualizar estadísticas
-    this.app.estadisticas.actualizar();
   }
 
   /**

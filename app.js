@@ -631,7 +631,6 @@ class CalendarioApp {
 
   async verificarActualizaciones() {
     try {
-      console.log('Cargando citas desde API');
       await this.cargarCitas();
       this.ui.setLastUpdate(`✓ Sincronizado - ${dayjs().format('HH:mm:ss')}`);
     } catch(e) {
@@ -642,14 +641,10 @@ class CalendarioApp {
 
   async cargarCitas() {
     try {
-      console.log('Cargando citas desde API');
       const citas = await this.api.getCitas();
       
       // Validar que sea un array
       this.citas = Array.isArray(citas) ? citas : [];
-      
-      console.log('Citas cargadas:', this.citas.length);
-      console.log('Primera cita (si existe):', this.citas[0]);
       
       this.ui.setLastUpdate(`Última actualización: ${dayjs().format('HH:mm:ss')}`);
       this.render();
@@ -761,13 +756,7 @@ class CalendarioApp {
           
           // La cita debe comenzar dentro de este slot
           // isSameOrAfter no existe, usar: !isBefore
-          const match = !citaFechaHora.isBefore(slotInicio) && citaFechaHora.isBefore(slotFin);
-          
-          if (match) {
-            console.log('✅ Cita encontrada:', c.name, 'en slot', hora, '(cita inicia:', citaFechaHora.format('HH:mm') + ')');
-          }
-          
-          return match;
+          return !citaFechaHora.isBefore(slotInicio) && citaFechaHora.isBefore(slotFin);
         });
 
         const cell = this.createCell(fecha, hora, cita);

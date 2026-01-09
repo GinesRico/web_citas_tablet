@@ -14,7 +14,6 @@ class SlotsView {
    */
   async render() {
     if (!this.container) {
-      console.error('❌ Container de slots no encontrado');
       return;
     }
     
@@ -22,7 +21,6 @@ class SlotsView {
     
     try {
       const slotsDisponibles = await this.obtenerSlotsDisponibles();
-      console.log('📦 Datos recibidos del API:', slotsDisponibles);
       this.renderSlots(slotsDisponibles);
     } catch (error) {
       console.error('❌ Error cargando slots:', error);
@@ -54,22 +52,14 @@ class SlotsView {
     const horarios = CONFIG.HORARIOS.map(h => h.join('-')).join(',');
     const url = `${CONFIG.API_BASE_URL}/disponibles?startDate=${startDate}&endDate=${endDate}&duracion=${CONFIG.DURACION_CITA}&horarios=${horarios}&timezone=${CONFIG.TIMEZONE}`;
     
-    console.log('🔍 Consultando slots disponibles:', url);
-    
     const response = await fetch(url);
-    
-    console.log('📡 Response status:', response.status, response.statusText);
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('❌ Error response:', errorText);
       throw new Error(`Error ${response.status}: ${response.statusText}`);
     }
     
     const data = await response.json();
-    console.log('✅ Slots disponibles obtenidos:', data.total, 'slots');
-    console.log('📋 Detalles:', data);
-    
     return data;
   }
 
