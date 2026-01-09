@@ -30,6 +30,8 @@
   <!-- Day.js -->
   <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/isSameOrBefore.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/utc.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/timezone.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dayjs@1/locale/es.js"></script>
 </head>
 <body>
@@ -134,6 +136,8 @@
 
   <script>
     dayjs.extend(window.dayjs_plugin_isSameOrBefore);
+    dayjs.extend(window.dayjs_plugin_utc);
+    dayjs.extend(window.dayjs_plugin_timezone);
     dayjs.locale('es');
   </script>
   <script src="app.js"></script>

@@ -437,7 +437,7 @@ class MiniCalendarioService {
 
     // Marcar si hay citas
     const tieneCitas = this.app.citas.some(c => {
-      const fechaCita = dayjs(c.start).format('YYYY-MM-DD');
+      const fechaCita = dayjs.utc(c.start).local().format('YYYY-MM-DD');
       return fechaCita === dia.format('YYYY-MM-DD');
     });
     
@@ -483,13 +483,13 @@ class EstadisticasService {
 
     // Citas de hoy
     const citasHoy = this.app.citas.filter(c => {
-      return dayjs(c.start).format('YYYY-MM-DD') === hoy;
+      return dayjs.utc(c.start).local().format('YYYY-MM-DD') === hoy;
     }).length;
 
     // Citas de esta semana
     const fechasSemana = diasSemana.map(d => d.format('YYYY-MM-DD'));
     const citasSemana = this.app.citas.filter(c => {
-      const fechaCita = dayjs(c.start).format('YYYY-MM-DD');
+      const fechaCita = dayjs.utc(c.start).local().format('YYYY-MM-DD');
       return fechasSemana.includes(fechaCita);
     }).length;
 
@@ -630,6 +630,7 @@ class CalendarioApp {
       this.citas = Array.isArray(citas) ? citas : [];
       
       console.log('Citas cargadas:', this.citas.length);
+      console.log('Primera cita (si existe):', this.citas[0]);
       
       this.ui.setLastUpdate(`Última actualización: ${dayjs().format('HH:mm:ss')}`);
       this.render();
@@ -711,7 +712,8 @@ class CalendarioApp {
         
         const cita = this.citas.find(c => {
           if (!c.start) return false;
-          const citaFechaHora = dayjs(c.start).format('YYYY-MM-DD HH:mm');
+          // Parsear la fecha UTC y convertirla a hora local para comparar
+          const citaFechaHora = dayjs.utc(c.start).local().format('YYYY-MM-DD HH:mm');
           return citaFechaHora === fechaHoraSlot;
         });
 
@@ -864,7 +866,7 @@ class CalendarioApp {
     `;
     
     const html = `
-      <h3>${hora} - ${dayjs(cita.start).format('dddd')}</h3>
+      <h3>${hora} - ${dayjs.utc(cita.start).local().format('dddd')}</h3>
       <p><b>Nombre:</b> ${cita.name}</p>
       <p><b>Teléfono:</b> <a href="tel:${cita.phone}" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">${cita.phone}</a></p>
       ${cita.email ? `<p><b>Email:</b> ${cita.email}</p>` : ''}
