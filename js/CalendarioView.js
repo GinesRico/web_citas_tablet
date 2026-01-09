@@ -216,6 +216,8 @@ class CalendarioView {
       });
       
       if (response.ok) {
+        // Notificar al webhook que hubo cambios
+        this.app.notificarCambio();
         // Recargar citas desde API para tener datos frescos
         await this.app.cargarCitas();
       } else {

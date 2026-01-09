@@ -5,6 +5,10 @@ const CONFIG = {
   // API REST
   API_BASE_URL: 'https://api-citas-seven.vercel.app/api',
   
+  // Webhook para notificaciones (n8n)
+  WEBHOOK_URL: 'https://webhook.arvera.es/webhook/cal-event',
+  CHECK_UPDATE_URL: 'https://webhook.arvera.es/webhook/check-update',
+  
   // Supabase Realtime (sincronización instantánea)
   SUPABASE_URL: 'https://pvvxwibhqowjcdxazalx.supabase.co',
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB2dnh3aWJocW93amNkeGF6YWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzYzNTY4MjIsImV4cCI6MjA1MTkzMjgyMn0.RJLCqGTiNx-bQFa8tXrM1B9j6wqP8wCEA7xGI1vPw4I',
@@ -581,25 +585,78 @@ class CalendarioApp {
     // Gestor de vistas (calendario y slots)
     this.viewManager = new ViewManager(this);
     
+    // Timestamp de última sincronización (para webhook)
+    this.lastUpdateTimestamp = null;
+    
     // Inicializar cliente de Supabase para Realtime
+    // DESHABILITADO: Configurar primero en supabase.com/dashboard
+    /*
     this.supabase = window.supabase.createClient(
       CONFIG.SUPABASE_URL,
       CONFIG.SUPABASE_ANON_KEY
     );
     this.realtimeChannel = null;
+    */
     
     this.init();
   }
 
   async init() {
     await this.verificarActualizaciones();
-    // Configurar sincronización en tiempo real con Supabase
-    this.setupRealtimeSubscription();
+    // Polling ligero: solo verificar timestamp cada 10s
+    this.startWebhookPolling();
     this.setupOrientationListener();
     this.setupTabsListener();
     this.setupVisibilityListener();
   }
 
+  startWebhookPolling() {
+    // Verificar timestamp cada 10 segundos (muy ligero)
+    this.refreshInterval = setInterval(() => {
+      if (!document.hidden) {
+        this.checkForUpdates();
+      }
+    }, 10000);
+  }
+
+  async checkForUpdates() {
+    try {
+      const response = await fetch(CONFIG.CHECK_UPDATE_URL);
+      const data = await response.json();
+      
+      // Si hay nuevo timestamp, actualizar citas
+      if (data.updatedAt && data.updatedAt !== this.lastUpdateTimestamp) {
+        console.log('🔄 Cambios detectados, actualizando...');
+        this.lastUpdateTimestamp = data.updatedAt;
+        await this.verificarActualizaciones();
+      }
+    } catch (error) {
+      console.error('Error verificando actualizaciones:', error);
+    }
+  }
+
+  async notificarCambio() {
+    // Notificar al webhook que hubo un cambio
+    try {
+      await fetch(CONFIG.WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          triggerEvent: 'CITA_CHANGED',
+          createdAt: new Date().toISOString()
+        })
+      });
+    } catch (error) {
+      console.error('Error notificando cambio:', error);
+    }
+  }
+
+  startAutoRefresh() {
+    // DEPRECATED: Usar startWebhookPolling() en su lugar
+    this.startWebhookPolling();
+  }
+
+  /* SUPABASE REALTIME - Deshabilitado hasta configurar en dashboard
   setupRealtimeSubscription() {
     // Crear canal de Supabase Realtime
     this.realtimeChannel = this.supabase
@@ -623,6 +680,7 @@ class CalendarioApp {
         }
       });
   }
+  */
 
   setupTabsListener() {
     // Event delegation para los botones de tabs
@@ -638,17 +696,18 @@ class CalendarioApp {
   }
 
   setupVisibilityListener() {
-    // Pausar/reanudar Realtime según visibilidad de la pestaña
+    // Pausar/reanudar verificación de timestamp según visibilidad
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
-        // Desconectar Realtime cuando la pestaña está oculta (ahorra recursos)
-        if (this.realtimeChannel) {
-          this.realtimeChannel.unsubscribe();
+        // Pausar cuando la pestaña está oculta
+        if (this.refreshInterval) {
+          clearInterval(this.refreshInterval);
+          this.refreshInterval = null;
         }
       } else {
-        // Reconectar y actualizar inmediatamente cuando vuelve
-        this.verificarActualizaciones();
-        this.setupRealtimeSubscription();
+        // Verificar inmediatamente y reanudar polling
+        this.checkForUpdates();
+        this.startWebhookPolling();
       }
     });
   }
@@ -675,6 +734,8 @@ class CalendarioApp {
   async verificarActualizaciones() {
     try {
       await this.cargarCitas();
+      // Actualizar la vista actual (calendario o slots)
+      this.viewManager.renderVistaActual();
       this.ui.setLastUpdate(`✓ Sincronizado - ${dayjs().format('HH:mm:ss')}`);
     } catch(e) {
       console.error('Error verificando actualizaciones:', e);
@@ -690,13 +751,14 @@ class CalendarioApp {
       this.citas = Array.isArray(citas) ? citas : [];
       
       this.ui.setLastUpdate(`Última actualización: ${dayjs().format('HH:mm:ss')}`);
-      this.render();
+      // Renderizar la vista actual (delegado al ViewManager)
+      this.viewManager.renderVistaActual();
     } catch(e) {
       console.error('Error cargando citas:', e);
       this.citas = [];
       this.ui.setLastUpdate('❌ Error al cargar');
       this.ui.showError('Error al cargar las citas');
-      this.render();
+      this.viewManager.renderVistaActual();
     }
   }
 
@@ -928,6 +990,8 @@ class CalendarioApp {
         const response = await this.api.eliminarCita(citaId);
         if (response.ok) {
           this.closeModal();
+          // Notificar al webhook que hubo cambios
+          this.notificarCambio();
           await this.cargarCitas();
         } else {
           alert('Error al eliminar la cita');
@@ -1105,6 +1169,8 @@ class CalendarioApp {
       
       if (response.ok) {
         mensajes.innerHTML = '<div class="success-message" style="display:block;">✓ Cita agendada correctamente</div>';
+        // Notificar al webhook que hubo cambios
+        this.notificarCambio();
         setTimeout(async () => {
           this.closeModal();
           await this.cargarCitas();
