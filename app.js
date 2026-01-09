@@ -659,6 +659,23 @@ class CalendarioApp {
     const primerDia = diasLaborables[0];
     const ultimoDia = diasLaborables[diasLaborables.length - 1];
     
+    // Debug: ver qué rango de fechas mostramos
+    console.log('📅 Calendario mostrando del', primerDia.format('YYYY-MM-DD'), 'al', ultimoDia.format('YYYY-MM-DD'));
+    
+    // Debug: contar citas en este rango
+    const citasEnRango = this.citas.filter(c => {
+      if (!c.start) return false;
+      const fechaCita = dayjs.utc(c.start).tz('Europe/Madrid').format('YYYY-MM-DD');
+      return fechaCita >= primerDia.format('YYYY-MM-DD') && fechaCita <= ultimoDia.format('YYYY-MM-DD');
+    });
+    console.log('📊 Citas en el rango visible:', citasEnRango.length);
+    if (citasEnRango.length > 0) {
+      console.log('  Ejemplos:', citasEnRango.slice(0, 3).map(c => ({
+        nombre: c.name,
+        fecha: dayjs.utc(c.start).tz('Europe/Madrid').format('YYYY-MM-DD HH:mm')
+      })));
+    }
+    
     this.ui.setTitle(`${primerDia.format('D MMM YYYY')} - ${ultimoDia.format('D MMM YYYY')}`);
     
     const grid = document.getElementById('week');
@@ -710,11 +727,28 @@ class CalendarioApp {
         const fecha = day.format('YYYY-MM-DD');
         const fechaHoraSlot = `${fecha} ${hora}`;
         
+        // Buscar cita que empiece en esta hora (o dentro del slot de 45 min)
         const cita = this.citas.find(c => {
           if (!c.start) return false;
-          // Parsear la fecha UTC y convertirla a hora local para comparar
-          const citaFechaHora = dayjs.utc(c.start).local().format('YYYY-MM-DD HH:mm');
-          return citaFechaHora === fechaHoraSlot;
+          const citaFechaHora = dayjs.utc(c.start).tz('Europe/Madrid');
+          const citaFecha = citaFechaHora.format('YYYY-MM-DD');
+          
+          // Verificar que sea el mismo día
+          if (citaFecha !== fecha) return false;
+          
+          // Crear el rango del slot (hora actual + 45 minutos)
+          const slotInicio = dayjs(`${fecha} ${hora}`);
+          const slotFin = slotInicio.add(CONFIG.DURACION_CITA, 'minute');
+          
+          // La cita debe comenzar dentro de este slot
+          // isSameOrAfter no existe, usar: !isBefore
+          const match = !citaFechaHora.isBefore(slotInicio) && citaFechaHora.isBefore(slotFin);
+          
+          if (match) {
+            console.log('✅ Cita encontrada:', c.name, 'en slot', hora, '(cita inicia:', citaFechaHora.format('HH:mm') + ')');
+          }
+          
+          return match;
         });
 
         const cell = this.createCell(fecha, hora, cita);

@@ -9,10 +9,12 @@ import requests
 import json
 from datetime import datetime
 import time
+import pytz
 
 # Configuración
 WEBHOOK_ANTIGUO = 'https://webhook.arvera.es/webhook/citas'
 API_NUEVA = 'https://api-citas-seven.vercel.app/api/citas'
+TIMEZONE_MADRID = pytz.timezone('Europe/Madrid')
 
 # Colores para terminal
 class Colors:
@@ -66,37 +68,50 @@ def mapear_cita(cita_antigua):
     
     Formato antiguo (Cal.com):
     {
-        "id": "...",
-        "start": "2026-01-15T10:00:00+00:00",
-        "end": "2026-01-15T11:00:00+00:00",
-        "name": "Juan Perez",
-        "phone": "600123456",
-        "service": "Revision",
-        "matricula": "ABC123",
-        "modelo": "Toyota",
-        "notes": "..."
+        "id": 12731666,
+        "start": "2025-11-14T10:30:00.000Z",  (UTC)
+        "end": "2025-11-14T11:15:00.000Z",    (UTC)
+        "date": "2025-11-14",
+        "time": "11:30",                      (hora local Madrid)
+        "name": "Same",
+        "phone": "+34631253869",
+        "service": "Alineación",
+        "timeZone": "Europe/Madrid"
     }
     
     Formato nuevo (API REST):
     {
-        "Nombre": "Juan Perez",
-        "Telefono": "600123456",
+        "Nombre": "Same",
+        "Telefono": "+34631253869",
         "Email": "",
-        "Servicio": "Revision",
-        "startTime": "2026-01-15T10:00:00Z",
-        "endTime": "2026-01-15T11:00:00Z",
-        "Matricula": "ABC123",
-        "Modelo": "Toyota",
-        "Notas": "..."
+        "Servicio": "Alineación",
+        "startTime": "2025-11-14T10:30:00.000Z",  (se mantiene UTC)
+        "endTime": "2025-11-14T11:15:00.000Z",    (se mantiene UTC)
+        "Matricula": "",
+        "Modelo": "",
+        "Notas": ""
     }
+    
+    IMPORTANTE: Las fechas start/end ya vienen en UTC (.000Z), 
+    se guardan tal cual en la BD y la UI las convierte a Europe/Madrid
     """
+    # Las fechas ya vienen en formato UTC correcto de Cal.com
+    start_time = cita_antigua.get("start", "")
+    end_time = cita_antigua.get("end", "")
+    
+    # Si las fechas no tienen el .000Z, lo agregamos
+    if start_time and not start_time.endswith('Z'):
+        start_time = start_time.replace('+00:00', '.000Z')
+    if end_time and not end_time.endswith('Z'):
+        end_time = end_time.replace('+00:00', '.000Z')
+    
     return {
         "Nombre": cita_antigua.get("name", ""),
         "Telefono": str(cita_antigua.get("phone", "")),
         "Email": cita_antigua.get("email", ""),
         "Servicio": cita_antigua.get("service", ""),
-        "startTime": cita_antigua.get("start", ""),
-        "endTime": cita_antigua.get("end", ""),
+        "startTime": start_time,
+        "endTime": end_time,
         "Matricula": cita_antigua.get("matricula", ""),
         "Modelo": cita_antigua.get("modelo", ""),
         "Notas": cita_antigua.get("notes", "")
@@ -157,12 +172,22 @@ def mostrar_preview(citas):
     
     for i, cita in enumerate(citas[:5], 1):
         cita_mapeada = mapear_cita(cita)
-        # Formatear fecha y hora
-        fecha_hora = cita_mapeada['startTime'][:16].replace('T', ' ') if cita_mapeada['startTime'] else 'N/A'
+        # Formatear fecha y hora - convertir de UTC a Europe/Madrid para mostrar
+        fecha_hora_str = 'N/A'
+        if cita_mapeada['startTime']:
+            try:
+                # Parsear UTC y convertir a Madrid
+                fecha_utc = datetime.fromisoformat(cita_mapeada['startTime'].replace('Z', '+00:00'))
+                fecha_madrid = fecha_utc.astimezone(TIMEZONE_MADRID)
+                fecha_hora_str = fecha_madrid.strftime('%Y-%m-%d %H:%M') + ' (Madrid)'
+            except:
+                fecha_hora_str = cita_mapeada['startTime'][:16].replace('T', ' ')
+        
         print(f"{Colors.BOLD}{i}. {cita_mapeada['Nombre']}{Colors.ENDC}")
         print(f"   Teléfono: {cita_mapeada['Telefono']}")
         print(f"   Servicio: {cita_mapeada['Servicio']}")
-        print(f"   Fecha/Hora: {fecha_hora}")
+        print(f"   Fecha/Hora: {fecha_hora_str}")
+        print(f"   UTC guardado: {cita_mapeada['startTime']}")
         if cita_mapeada['Modelo']:
             print(f"   Modelo: {cita_mapeada['Modelo']} ({cita_mapeada['Matricula']})")
         print()
