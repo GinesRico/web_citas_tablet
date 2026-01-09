@@ -4,7 +4,9 @@ Aplicación web para gestión de citas optimizada para tablets y dispositivos t�
 
 ## 🚀 Características
 
+- ✅ **Doble vista**: Calendario semanal y slots disponibles
 - ✅ Vista de calendario semanal (7 días laborables desde hoy)
+- ✅ Vista de slots disponibles (horarios libres consultados desde API)
 - ✅ Sincronización automática cada 30 segundos
 - ✅ Agendamiento de citas con formulario táctil
 - ✅ Drag & drop para reorganizar citas
@@ -13,7 +15,7 @@ Aplicación web para gestión de citas optimizada para tablets y dispositivos t�
 - ✅ Optimizado para tablets táctiles
 - ✅ Pull to refresh en móviles
 - ✅ Dark mode support
-- ✅ Arquitectura SOLID
+- ✅ Arquitectura modular y SOLID
 
 ## 📱 Tecnologías
 
@@ -27,17 +29,26 @@ Aplicación web para gestión de citas optimizada para tablets y dispositivos t�
 
 ## 🏗️ Arquitectura
 
-El código sigue principios SOLID:
+El código sigue principios SOLID con una arquitectura modular:
 
-- **Single Responsibility**: Cada clase tiene una única responsabilidad
-  - `ApiService`: Comunicación con API REST
-  - `StorageService`: Persistencia de datos
-  - `UIService`: Manipulación del DOM
-  - `HorarioService`: Generación de horarios
-  - `DiasLaborablesService`: Generación de días laborables
-  - `CalendarioApp`: Orquestación principal
+### Módulos de Vista (separados en `js/`)
+- **`ViewManager.js`**: Gestor de vistas (cambio entre calendario y slots)
+- **`CalendarioView.js`**: Renderizado del calendario semanal con drag & drop
+- **`SlotsView.js`**: Renderizado de horarios disponibles (consume endpoint `/api/disponibles`)
 
+### Servicios Principales (en `app.js`)
+- **`ApiService`**: Comunicación con API REST
+- **`UIService`**: Manipulación del DOM y modales
+- **`HorarioService`**: Generación de horarios (08:30-12:15, 15:45-18:00)
+- **`DiasLaborablesService`**: Generación de días laborables (excluye sábados/domingos)
+- **`EstadisticasService`**: Cálculo de estadísticas de citas
+- **`MiniCalendarioService`**: Calendario lateral de navegación
+- **`CalendarioApp`**: Orquestación principal
+
+### Principios Aplicados
+- **Single Responsibility**: Cada clase/módulo tiene una única responsabilidad
 - **Open/Closed**: Extendible sin modificar código existente
+- **Separation of Concerns**: Vistas separadas en módulos independientes
 - **Dependency Inversion**: Las clases dependen de abstracciones
 
 ## 🔗 API

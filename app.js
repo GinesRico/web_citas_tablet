@@ -1,15 +1,27 @@
 /****************************************
- * CONFIGURACIÓN
+ * CONFIGURACIÓN GLOBAL
  ****************************************/
 const CONFIG = {
   API_BASE_URL: 'https://api-citas-seven.vercel.app/api',
   AUTO_REFRESH_INTERVAL: 30 * 1000, // 30 segundos
+  
+  // TIMEZONE: Zona horaria para todas las operaciones
+  TIMEZONE: 'Europe/Madrid',
+  
+  // HORARIOS: Define los rangos de trabajo en HORA LOCAL (Europe/Madrid)
+  // Formato: [['hora_inicio', 'hora_fin'], ['hora_inicio', 'hora_fin']]
+  // Se usa tanto para el grid del calendario como para consultar slots disponibles en la API
+  // El backend interpreta estos horarios en el timezone correcto
   HORARIOS: [
-    ['08:30', '12:15'],
-    ['15:45', '18:00']
+    ['08:30', '12:15'],  // Horario de mañana (hora local Madrid)
+    ['15:45', '18:00']   // Horario de tarde (hora local Madrid)
   ],
+  
+  // DURACION_CITA: Duración de cada slot en minutos
+  // Se usa para generar el grid del calendario y consultar slots disponibles en la API
   DURACION_CITA: 45, // minutos
-  DIAS_LABORABLES: 7 // 7 días laborables (sin sábados ni domingos)
+  
+  DIAS_LABORABLES: 7 // Días laborables a mostrar en el calendario (lunes a viernes)
 };
 
 /****************************************
@@ -420,16 +432,6 @@ class MiniCalendarioService {
       dayCell.classList.add('today');
     }
 
-    // Marcar semana seleccionada
-    const semanaActual = this.app.currentWeek;
-    const finSemana = semanaActual.add(6, 'day');
-    const diaStr = dia.format('YYYY-MM-DD');
-    const inicioStr = semanaActual.format('YYYY-MM-DD');
-    const finStr = finSemana.format('YYYY-MM-DD');
-    if (diaStr >= inicioStr && diaStr <= finStr) {
-      dayCell.classList.add('selected');
-    }
-
     // Marcar fin de semana
     if (dia.day() === 0 || dia.day() === 6) {
       dayCell.classList.add('weekend');
@@ -575,6 +577,9 @@ class CalendarioApp {
     // Auto-refresh interval
     this.refreshInterval = null;
     
+    // Gestor de vistas (calendario y slots)
+    this.viewManager = new ViewManager(this);
+    
     this.init();
   }
 
@@ -665,14 +670,14 @@ class CalendarioApp {
     // Debug: contar citas en este rango
     const citasEnRango = this.citas.filter(c => {
       if (!c.start) return false;
-      const fechaCita = dayjs.utc(c.start).tz('Europe/Madrid').format('YYYY-MM-DD');
+      const fechaCita = dayjs.utc(c.start).tz(CONFIG.TIMEZONE).format('YYYY-MM-DD');
       return fechaCita >= primerDia.format('YYYY-MM-DD') && fechaCita <= ultimoDia.format('YYYY-MM-DD');
     });
     console.log('📊 Citas en el rango visible:', citasEnRango.length);
     if (citasEnRango.length > 0) {
       console.log('  Ejemplos:', citasEnRango.slice(0, 3).map(c => ({
         nombre: c.name,
-        fecha: dayjs.utc(c.start).tz('Europe/Madrid').format('YYYY-MM-DD HH:mm')
+        fecha: dayjs.utc(c.start).tz(CONFIG.TIMEZONE).format('YYYY-MM-DD HH:mm')
       })));
     }
     
@@ -730,7 +735,7 @@ class CalendarioApp {
         // Buscar cita que empiece en esta hora (o dentro del slot de 45 min)
         const cita = this.citas.find(c => {
           if (!c.start) return false;
-          const citaFechaHora = dayjs.utc(c.start).tz('Europe/Madrid');
+          const citaFechaHora = dayjs.utc(c.start).tz(CONFIG.TIMEZONE);
           const citaFecha = citaFechaHora.format('YYYY-MM-DD');
           
           // Verificar que sea el mismo día
@@ -1113,11 +1118,17 @@ class CalendarioApp {
     let nuevaFecha = this.currentWeek.add(offset * CONFIG.DIAS_LABORABLES, 'day');
     // Ajustar a día laborable si cae en fin de semana
     this.currentWeek = this.diasLaborablesService.obtenerSiguienteDiaLaborable(nuevaFecha);
-    this.render();
+    // Actualizar la vista actual (calendario o slots)
+    this.viewManager.renderVistaActual();
   }
 
   closeModal() {
     this.ui.closeModal();
+  }
+
+  // Cambiar entre vista calendario y vista slots
+  cambiarVista(vista) {
+    this.viewManager.cambiarVista(vista);
   }
 }
 

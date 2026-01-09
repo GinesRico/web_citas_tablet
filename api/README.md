@@ -6,6 +6,7 @@ API REST para gestión de citas desplegada en Vercel con base de datos Supabase 
 
 - ✅ CRUD completo de citas
 - ✅ Filtrado por rango de fechas
+- ✅ **Consulta de horas disponibles en un rango de fechas**
 - ✅ Sistema de cancelación con tokens seguros
 - ✅ CORS habilitado
 - ✅ Base de datos PostgreSQL (Supabase)
@@ -123,6 +124,67 @@ curl "https://api-citas-seven.vercel.app/api/cancelar?token=QmUimF6j8pOpl2CaHRQ5
 }
 ```
 
+### GET /api/disponibles
+Obtiene las horas disponibles (no ocupadas) en un rango de fechas.
+
+**Query Parameters:**
+- `startDate` (requerido) - Fecha inicio en formato `YYYY-MM-DD` o ISO 8601 (ej: `2026-01-20` o `2026-01-20T00:00:00Z`)
+- `endDate` (requerido) - Fecha fin en formato `YYYY-MM-DD` o ISO 8601 (ej: `2026-01-25` o `2026-01-25T23:59:59Z`)
+- `duracion` (opcional) - Duración de cada slot en minutos (por defecto: `60`)
+- `horarios` (opcional) - Múltiples rangos horarios separados por comas (ej: `08:30-12:15,15:45-18:00`)
+- `horaInicio` (opcional) - Hora de inicio del horario laboral HH:MM (por defecto: `09:00`)
+- `horaFin` (opcional) - Hora de fin del horario laboral HH:MM (por defecto: `18:00`)
+- `timezone` (opcional) - Zona horaria para los horarios (ej: `Europe/Madrid`). Si se especifica, los horarios se interpretan como hora local y se convierten automáticamente a UTC
+
+**Notas:**
+- Si se especifica `horarios`, se ignoran `horaInicio` y `horaFin`
+- Si se especifica `timezone`, los horarios en `horarios`/`horaInicio`/`horaFin` se interpretan como hora local de esa zona horaria
+
+**Ejemplo:**
+```bash
+# Ver horas disponibles de un solo día (12 de enero) - horarios en hora local de España
+curl "https://api-citas-seven.vercel.app/api/disponibles?startDate=2026-01-12&endDate=2026-01-12&duracion=45&horarios=08:30-12:15,15:45-18:00&timezone=Europe/Madrid"
+
+# Ver horas disponibles del 20 al 25 de enero, slots de 60 minutos
+curl "https://api-citas-seven.vercel.app/api/disponibles?startDate=2026-01-20&endDate=2026-01-25&duracion=60"
+
+# Con horario personalizado (8:00 - 20:00) en hora local
+curl "https://api-citas-seven.vercel.app/api/disponibles?startDate=2026-01-20&endDate=2026-01-25&duracion=30&horaInicio=08:00&horaFin=20:00&timezone=Europe/Madrid"
+
+# Sin timezone (horarios en UTC)
+curl "https://api-citas-seven.vercel.app/api/disponibles?startDate=2026-01-20&endDate=2026-01-25&duracion=45&horarios=07:30-11:15,14:45-17:00"
+```
+
+**Respuesta:**
+```json
+{
+  "total": 45,
+  "parametros": {
+    "startDate": "2026-01-20T00:00:00Z",
+    "endDate": "2026-01-25T23:59:59Z",
+    "duracion": 60,
+    "horaInicio": "09:00",
+    "horaFin": "18:00"
+  },
+  "disponibles": [
+    {
+      "fecha": "2026-01-20",
+      "hora_inicio": "09:00",
+      "hora_fin": "10:00",
+      "startTime": "2026-01-20T09:00:00+00:00",
+      "endTime": "2026-01-20T10:00:00+00:00"
+    },
+    {
+      "fecha": "2026-01-20",
+      "hora_inicio": "11:00",
+      "hora_fin": "12:00",
+      "startTime": "2026-01-20T11:00:00+00:00",
+      "endTime": "2026-01-20T12:00:00+00:00"
+    }
+  ]
+}
+```
+
 ## 🛠️ Configuración
 
 ### Variables de Entorno (Vercel)
@@ -171,6 +233,7 @@ git push origin main
 api_citas/
 ├── api/
 │   ├── cancelar.py       # GET /api/cancelar (cancelación por token)
+│   ├── disponibles.py    # GET /api/disponibles (horas disponibles)
 │   └── citas/
 │       ├── index.py      # GET/POST /api/citas
 │       └── [id].py       # GET/PUT/DELETE /api/citas/{id}
@@ -233,6 +296,21 @@ curl -X DELETE https://api-citas-seven.vercel.app/api/citas/CITA_ID
 ### Cancelar por token
 ```bash
 curl "https://api-citas-seven.vercel.app/api/cancelar?token=TOKEN_AQUI"
+```
+
+### Ver horas disponibles
+```bash
+# Horas disponibles para un día específico (12 de enero) - hora local España
+curl "https://api-citas-seven.vercel.app/api/disponibles?startDate=2026-01-12&endDate=2026-01-12&duracion=45&horarios=08:30-12:15,15:45-18:00&timezone=Europe/Madrid"
+
+# Slots de 60 minutos del 20 al 25 de enero
+curl "https://api-citas-seven.vercel.app/api/disponibles?startDate=2026-01-20&endDate=2026-01-25&duracion=60"
+
+# Slots de 30 minutos con horario extendido (8:00 - 20:00) en hora local
+curl "https://api-citas-seven.vercel.app/api/disponibles?startDate=2026-01-20&endDate=2026-01-25&duracion=30&horaInicio=08:00&horaFin=20:00&timezone=Europe/Madrid"
+
+# Sin timezone (horarios en UTC directamente)
+curl "https://api-citas-seven.vercel.app/api/disponibles?startDate=2026-01-20&endDate=2026-01-25&duracion=45&horarios=07:30-11:15,14:45-17:00"
 ```
 
 ## 🔒 Seguridad

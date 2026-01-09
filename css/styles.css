@@ -241,6 +241,7 @@ body.device-mobile .sidebar {
   padding: 0;
   width: 100%;
   overflow-x: auto;
+  display: block !important;
 }
 
 .calendar-grid {
@@ -804,7 +805,15 @@ body.device-mobile .sidebar {
 
 @media (max-width: 1366px) {
   .sidebar {
-    display: none;
+    display: none !important;
+  }
+
+  .main-content {
+    display: block;
+  }
+
+  .vista-container {
+    width: 100% !important;
   }
 }
 
@@ -815,6 +824,19 @@ body.device-mobile .sidebar {
 }
 
 @media (max-width: 768px) {
+  .sidebar {
+    display: none !important;
+  }
+
+  .main-content {
+    display: block !important;
+    width: 100%;
+  }
+
+  .vista-container {
+    width: 100% !important;
+  }
+
   .header-content {
     padding: 8px 12px;
     gap: 8px;
@@ -905,5 +927,405 @@ body.device-mobile .sidebar {
   .busy-local .cita-info {
     font-size: 11px;
     line-height: 1.4;
+  }
+}
+
+/* ==========================================
+   VISTA TABS - NAVEGACIÓN
+   ========================================== */
+
+.view-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 12px 24px 0;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--surface);
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.tab-btn:hover {
+  background: rgba(26, 115, 232, 0.05);
+  color: var(--primary-color);
+}
+
+.tab-btn.active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+}
+
+.tab-btn svg {
+  opacity: 0.7;
+}
+
+.tab-btn.active svg {
+  opacity: 1;
+}
+
+/* ==========================================
+   VISTAS CONTENEDOR
+   ========================================== */
+
+.vista-container {
+  display: none;
+  flex: 1;
+  overflow: auto;
+}
+
+.vista-container.active {
+  display: block;
+}
+
+#vistaSlots.active {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==========================================
+   VISTA SLOTS DISPONIBLES
+   ========================================== */
+
+.slots-view {
+  background: var(--background);
+  padding: 24px;
+}
+
+.slots-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.slots-header {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.slots-header h2 {
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.slots-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.slots-grid {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding: 16px 0;
+  scroll-snap-type: x mandatory;
+}
+
+/* Columna de día (estilo Cal.com) */
+.dia-slots-columna {
+  min-width: 140px;
+  flex-shrink: 0;
+  scroll-snap-align: start;
+}
+
+.dia-slots-columna .dia-slots-header {
+  padding: 12px 8px;
+  text-align: center;
+  border-bottom: 2px solid var(--border-color);
+  margin-bottom: 8px;
+}
+
+.dia-nombre-corto {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
+}
+
+/* Lista vertical de slots */
+.slots-list-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 8px;
+}
+
+.slot-btn-columna {
+  width: 100%;
+  padding: 10px 12px;
+  background: white;
+  color: var(--primary-color);
+  border: 1.5px solid var(--primary-color);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: 'Roboto Mono', monospace;
+  text-align: center;
+}
+
+.slot-btn-columna:hover {
+  background: var(--primary-color);
+  color: white;
+  transform: scale(1.02);
+}
+
+.slot-btn-columna:active {
+  transform: scale(0.98);
+}
+
+/* Mantener estilos legacy para compatibilidad */
+.slot-btn {
+  padding: 12px 16px;
+  background: var(--success-light);
+  color: var(--success-dark);
+  border: 1px solid rgba(76, 175, 80, 0.2);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Roboto Mono', monospace;
+}
+
+.slot-btn:hover {
+  background: var(--success-color);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.slot-btn:active {
+  transform: translateY(0);
+}
+
+.no-slots {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 24px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* Estados de carga y error en slots */
+.loading-slots,
+.error-slots,
+.no-disponibles {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text-secondary);
+}
+
+.loading-slots {
+  font-size: 16px;
+}
+
+.error-slots {
+  color: var(--error-color);
+}
+
+.error-slots button {
+  margin-top: 16px;
+  padding: 10px 20px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.error-slots button:hover {
+  background: var(--primary-dark);
+}
+
+.no-disponibles {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.no-disponibles svg {
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
+.no-disponibles h3 {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.no-disponibles p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Info de total de slots */
+.slots-total-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  background: var(--success-light);
+  color: var(--success-dark);
+  border-radius: 8px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.slots-total-info svg {
+  flex-shrink: 0;
+}
+
+/* Contador en header del día */
+.slots-count {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* ==========================================
+   RESPONSIVE - SLOTS VIEW
+   ========================================== */
+
+@media (max-width: 768px) {
+  .view-tabs {
+    padding: 8px 16px 0;
+    gap: 4px;
+  }
+
+  .tab-btn {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .tab-btn span {
+    display: none;
+  }
+
+  .slots-view {
+    padding: 12px;
+  }
+
+  .slots-container {
+    max-width: 100%;
+  }
+
+  /* Cambiar a disposición vertical (uno debajo de otro) */
+  .slots-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-x: visible;
+    padding: 12px 0;
+  }
+
+  .dia-slots-columna {
+    min-width: 100%;
+    width: 100%;
+    flex-shrink: 1;
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .dia-slots-columna .dia-slots-header {
+    padding: 12px 16px;
+    background: var(--background);
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .dia-nombre-corto {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  /* Slots en lista vertical dentro de cada día (uno debajo de otro) */
+  .slots-list-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .slot-btn-columna {
+    padding: 10px 8px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .slots-view {
+    padding: 8px;
+  }
+
+  .slots-grid {
+    gap: 12px;
+    padding: 8px 0;
+  }
+
+  .dia-slots-columna .dia-slots-header {
+    padding: 10px 12px;
+  }
+
+  .dia-nombre-corto {
+    font-size: 13px;
+  }
+
+  .slots-list-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px;
+  }
+
+  .slot-btn-columna {
+    padding: 8px 6px;
+    font-size: 11px;
+  }
+}
+  }
+
+  .slots-list {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+
+  .slot-btn {
+    padding: 10px 8px;
+    font-size: 13px;
+  }
+}
+
+@media (min-width: 1400px) {
+  .slots-grid {
+    grid-template-columns: repeat(4, 1fr);
   }
 }
