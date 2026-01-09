@@ -1,0 +1,498 @@
+:root {
+  --primary-color: #1a73e8;
+  --primary-dark: #1557b0;
+  --success-color: #4caf50;
+  --error-color: #c5221f;
+  --bg-color: #f8f9fa;
+  --card-bg: #ffffff;
+  --text-primary: #202124;
+  --text-secondary: #5f6368;
+  --border-color: #dadce0;
+  --shadow: 0 1px 3px rgba(0,0,0,0.12);
+  --shadow-hover: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  background: var(--bg-color);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+/* Header */
+.header-publico {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  color: white;
+  padding: 2rem 1rem;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.logo-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.logo-empresa {
+  height: 60px;
+  width: auto;
+  max-width: 100%;
+}
+
+.logo-icon {
+  font-size: 2.5rem;
+}
+
+.header-publico h1 {
+  font-size: 2rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.header-publico .subtitle {
+  font-size: 1rem;
+  opacity: 0.9;
+  font-weight: 300;
+  margin: 0;
+}
+
+/* Main Container */
+.main-publico {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+/* Selector de semana */
+.semana-selector {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  background: var(--card-bg);
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.btn-navegacion {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  min-width: 48px;
+  min-height: 48px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btn-navegacion .material-icons {
+  font-size: 28px;
+}
+
+.btn-navegacion:hover {
+  background: var(--primary-dark);
+  transform: scale(1.1);
+}
+
+.btn-navegacion:active {
+  transform: scale(0.95);
+}
+
+.rango-semana {
+  font-size: 1.1rem;
+  font-weight: 500;
+  text-align: center;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Info mensaje */
+.info-mensaje {
+  background: #e3f2fd;
+  border-left: 4px solid var(--primary-color);
+  padding: 1rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.info-mensaje .material-icons {
+  color: var(--primary-color);
+  font-size: 24px;
+}
+
+.info-mensaje p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+/* Slots Container */
+.slots-container-publico {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Día columna */
+.dia-publico {
+  background: var(--card-bg);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.dia-publico:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+.dia-header-publico {
+  background: var(--primary-color);
+  color: white;
+  padding: 1rem;
+  text-align: center;
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.slots-list-publico {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.slot-btn-publico {
+  background: white;
+  border: 2px solid var(--border-color);
+  border-radius: 6px;
+  padding: 0.75rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-primary);
+}
+
+.slot-btn-publico:hover {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+  transform: translateX(4px);
+}
+
+/* Loading */
+.loading {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-secondary);
+}
+
+.loading .material-icons {
+  font-size: 48px;
+  margin-bottom: 1rem;
+  color: var(--primary-color);
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Modal */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+.modal-content {
+  background: var(--card-bg);
+  border-radius: 8px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h2 {
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+.btn-close {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.btn-close:hover {
+  background: var(--bg-color);
+  color: var(--text-primary);
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+/* Formulario */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+}
+
+.phone-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.phone-group select {
+  flex: 0 0 140px;
+}
+
+.phone-group input {
+  flex: 1;
+}
+
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.checkbox-item input[type="checkbox"] {
+  width: auto;
+  cursor: pointer;
+}
+
+.checkbox-item label {
+  margin: 0;
+  cursor: pointer;
+  font-weight: 400;
+}
+
+/* Botones */
+.btn-primary {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 1rem 2rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+.btn-primary:disabled {
+  background: var(--border-color);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Mensajes */
+.mensaje {
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mensaje-exito {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-left: 4px solid var(--success-color);
+}
+
+.mensaje-exito .material-icons {
+  color: var(--success-color);
+  font-size: 24px;
+}
+
+.mensaje-error {
+  background: #fce8e6;
+  color: var(--error-color);
+  border-left: 4px solid var(--error-color);
+}
+
+.mensaje-error .material-icons {
+  color: var(--error-color);
+  font-size: 24px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header-publico {
+    padding: 1.5rem 1rem;
+  }
+
+  .logo-empresa {
+    height: 45px;
+  }
+
+  .logo-icon {
+    font-size: 2rem;
+  }
+
+  .header-publico h1 {
+    font-size: 1.5rem;
+  }
+
+  .header-publico .subtitle {
+    font-size: 0.9rem;
+  }
+
+  .semana-selector {
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .btn-navegacion {
+    min-width: 44px;
+    min-height: 44px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .btn-navegacion .material-icons {
+    font-size: 24px;
+  }
+
+  .rango-semana {
+    font-size: 0.95rem;
+  }
+
+  .slots-container-publico {
+    grid-template-columns: 1fr;
+  }
+
+  .main-publico {
+    padding: 1rem 0.75rem;
+  }
+
+  .info-mensaje {
+    font-size: 0.9rem;
+    padding: 0.75rem;
+  }
+
+  .info-mensaje .material-icons {
+    font-size: 20px;
+  }
+}
+
+/* Sin slots disponibles */
+.sin-slots {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-secondary);
+}
+
+.sin-slots .material-icons {
+  font-size: 64px;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}

@@ -6,6 +6,12 @@
       "use": "@vercel/static"
     }
   ],
+  "rewrites": [
+    {
+      "source": "/reservas",
+      "destination": "/reservas.html"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",

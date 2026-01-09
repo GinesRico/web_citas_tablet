@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1a73e8">
+  <meta name="description" content="Reserva tu cita en Arvera Neumáticos">
+  <title>Reservar Cita - Arvera Neumáticos</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  
+  <!-- Estilos -->
+  <link rel="stylesheet" href="css/reservas.css">
+  
+  <!-- Day.js -->
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/utc.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/timezone.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/locale/es.js"></script>
+  <script>
+    dayjs.extend(window.dayjs_plugin_utc);
+    dayjs.extend(window.dayjs_plugin_timezone);
+    dayjs.locale('es');
+  </script>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header-publico">
+    <div class="header-content">
+      <div class="logo-title">
+        <img src="icons/logotipo_ARVERA_W.png" alt="Arvera Neumáticos" class="logo-empresa">
+      </div>
+      <p class="subtitle">Reserva tu cita online</p>
+    </div>
+  </header>
+
+  <!-- Contenedor principal -->
+  <main class="main-publico">
+    <!-- Selector de semana -->
+    <div class="semana-selector">
+      <button id="btnSemanaAnterior" class="btn-navegacion">
+        <span class="material-icons">chevron_left</span>
+      </button>
+      <span id="rangoSemana" class="rango-semana"></span>
+      <button id="btnSemanaSiguiente" class="btn-navegacion">
+        <span class="material-icons">chevron_right</span>
+      </button>
+    </div>
+
+    <!-- Mensaje de bienvenida -->
+    <div class="info-mensaje">
+      <span class="material-icons">info</span>
+      <p>Selecciona un horario disponible para agendar tu cita</p>
+    </div>
+
+    <!-- Contenedor de slots disponibles -->
+    <div id="slotsContainer" class="slots-container-publico">
+      <div class="loading">
+        <span class="material-icons spinning">refresh</span>
+        <p>Cargando horarios disponibles...</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal para formulario de reserva -->
+  <div id="modalReserva" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Agendar Cita</h2>
+        <button class="btn-close" onclick="cerrarModal()">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/reservas.js"></script>
+</body>
+</html>

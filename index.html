@@ -10,6 +10,9 @@
   <meta name="apple-mobile-web-app-title" content="Citas Arvera">
   <title>Calendario de Citas - Arvera</title>
   
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  
   <!-- PWA Manifest -->
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg">
@@ -38,6 +41,28 @@
   <script src="https://cdn.jsdelivr.net/npm/dayjs@1/locale/es.js"></script>
 </head>
 <body>
+  <!-- Pantalla de Login -->
+  <div id="login-screen" style="background: linear-gradient(135deg, #1a73e8, #1557b0); height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 24px;">
+    <img src="icons/logotipo_ARVERA_W.png" alt="Arvera" style="max-width: 320px; width: 60%; height: auto;" />
+    <div id="login-card">
+      <div id="g_id_onload"
+           data-client_id="972104926970-o2negnvpu6kekcs7pc8vuqboaoopemq5.apps.googleusercontent.com"
+           data-callback="handleCredentialResponse"
+           data-auto_prompt="false"
+           data-ux_mode="popup">
+      </div>
+      <div class="g_id_signin"
+           data-type="standard"
+           data-shape="rectangular"
+           data-theme="outline"
+           data-text="signin_with"
+           data-size="large">
+      </div>
+    </div>
+  </div>
+
+  <!-- App Principal (oculta hasta login) -->
+  <div id="app-container" style="display: none;">
   <!-- Header -->
   <header class="header">
     <div class="header-content">
@@ -157,6 +182,9 @@
       <div id="modal-body"></div>
     </div>
   </div>
+  
+  </div>
+  <!-- /App Container -->
 
   <!-- Loading -->
   <div id="loadingOverlay" class="loading-overlay">
@@ -173,6 +201,56 @@
   
   <!-- Supabase JS para Realtime -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- Sistema de Autenticación -->
+  <script>
+    const ALLOWED_EMAILS = ["arvera1982@gmail.com"];
+    
+    function parseJwt(token) {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const pad = base64.length % 4;
+        const padded = base64 + (pad ? '='.repeat(4 - pad) : '');
+        const jsonPayload = decodeURIComponent(atob(padded).split('').map(c => '%' + ('00'+c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+        return JSON.parse(jsonPayload);
+      } catch(e){ return null; }
+    }
+    
+    function handleCredentialResponse(response) {
+      const payload = parseJwt(response.credential);
+      if (!payload) {
+        alert("Error al leer la respuesta de Google.");
+        return;
+      }
+      
+      const email = (payload.email || "").toLowerCase();
+      const emailAllowed = ALLOWED_EMAILS.includes(email);
+      
+      if (emailAllowed) {
+        sessionStorage.setItem("arvera_admin_logged_in", email);
+        showApp();
+      } else {
+        alert("Acceso denegado. Usuario no autorizado.");
+        if (window.google && google.accounts && google.accounts.id) {
+          google.accounts.id.disableAutoSelect();
+        }
+      }
+    }
+    
+    function showApp() {
+      document.getElementById("login-screen").style.display = "none";
+      document.getElementById("app-container").style.display = "block";
+    }
+    
+    // Verificar si ya está logueado
+    document.addEventListener("DOMContentLoaded", () => {
+      const logged = sessionStorage.getItem("arvera_admin_logged_in");
+      if (logged) {
+        showApp();
+      }
+    });
+  </script>
   
   <!-- Módulos de la aplicación -->
   <script src="js/ViewManager.js"></script>
