@@ -587,6 +587,20 @@ class CalendarioApp {
     await this.verificarActualizaciones();
     this.startAutoRefresh();
     this.setupOrientationListener();
+    this.setupTabsListener();
+  }
+
+  setupTabsListener() {
+    // Event delegation para los botones de tabs
+    document.querySelector('.view-tabs')?.addEventListener('click', (e) => {
+      const tabBtn = e.target.closest('.tab-btn');
+      if (tabBtn) {
+        const vista = tabBtn.dataset.view;
+        if (vista) {
+          this.cambiarVista(vista);
+        }
+      }
+    });
   }
 
   setupOrientationListener() {
