@@ -383,6 +383,21 @@ class ReservasPublicas {
 
       if (response.ok) {
         mensajes.innerHTML = '<div class="mensaje mensaje-exito"><span class="material-icons" style="vertical-align:middle;margin-right:8px;">check_circle</span>¡Reserva confirmada! Te enviaremos un recordatorio por SMS.</div>';
+        
+        // Notificar al webhook que hubo un cambio
+        try {
+          await fetch(CONFIG.WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              triggerEvent: 'CITA_CHANGED',
+              createdAt: new Date().toISOString()
+            })
+          });
+        } catch (error) {
+          console.error('Error notificando cambio:', error);
+        }
+        
         setTimeout(() => {
           this.cerrarModal();
           this.cargarSlotsDisponibles();

@@ -1001,10 +1001,10 @@ class CalendarioApp {
         <button class="btn-accion btn-accion-llamar" onclick="window.location.href='tel:${cita.phone}'" title="Llamar">
           <span class="material-icons">phone</span>
         </button>
-        <button class="btn-accion btn-accion-modificar" onclick="app.modificarCita('${cita.id}')" title="Modificar">
+        <button class="btn-accion btn-accion-modificar" onclick="modificarCita('${cita.id}')" title="Modificar">
           <span class="material-icons">edit</span>
         </button>
-        <button class="btn-accion btn-accion-eliminar" onclick="app.eliminarCita('${cita.id}')" title="Eliminar">
+        <button class="btn-accion btn-accion-eliminar" onclick="eliminarCita('${cita.id}')" title="Eliminar">
           <span class="material-icons">delete</span>
         </button>
       </div>
