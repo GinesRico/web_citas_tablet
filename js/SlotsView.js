@@ -38,10 +38,10 @@ class SlotsView {
    * Obtiene los slots disponibles del API
    */
   async obtenerSlotsDisponibles() {
-    // Obtener rango de fechas de la semana actual
+    // Obtener rango de fechas de la semana actual (7 días laborables)
     const diasLaborables = this.app.diasLaborablesService.generarDiasLaborables(
       this.app.currentWeek,
-      CONFIG.DIAS_LABORABLES.length
+      7
     );
     
     // Usar formato simple YYYY-MM-DD (como en el ejemplo que funciona)

@@ -201,7 +201,7 @@
   <!-- Modal -->
   <div id="modal" class="modal">
     <div class="modal-content">
-      <button class="modal-close" onclick="app.closeModal()">
+      <button class="modal-close" onclick="closeModal()">
         <svg viewBox="0 0 24 24" width="24" height="24">
           <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
         </svg>
@@ -209,6 +209,17 @@
       <div id="modal-body"></div>
     </div>
   </div>
+
+  <script>
+    // Función global para cerrar el modal
+    function closeModal() {
+      if (window.app && app.ui) {
+        app.ui.closeModal();
+      } else {
+        document.getElementById('modal').classList.remove('active');
+      }
+    }
+  </script>
   
   </div>
   <!-- /App Container -->

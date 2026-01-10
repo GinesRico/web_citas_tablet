@@ -465,9 +465,10 @@ class EstadisticasService {
 
   calcular() {
     const hoy = dayjs().format('YYYY-MM-DD');
+    // Calcular estadísticas para 7 días laborables
     const diasSemana = this.app.diasLaborablesService.generarDiasLaborables(
       this.app.currentWeek,
-      CONFIG.DIAS_LABORABLES.length
+      7
     );
 
     // Fechas de la semana visible

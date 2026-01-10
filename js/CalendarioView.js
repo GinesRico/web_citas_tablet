@@ -18,9 +18,10 @@ class CalendarioView {
     
     this.container.innerHTML = '';
     
+    // Mostrar 7 días laborables (sin contar fines de semana)
     const diasLaborables = this.app.diasLaborablesService.generarDiasLaborables(
       this.app.currentWeek,
-      CONFIG.DIAS_LABORABLES.length
+      7
     );
     
     const primerDia = diasLaborables[0];
