@@ -402,8 +402,7 @@ class ReservasPublicas {
 
 // Función global para cerrar modal
 function cerrarModal() {
-  app.cerrarModal();
+  if (window.reservas) {
+    window.reservas.cerrarModal();
+  }
 }
-
-// Variable global para la app (se inicializará desde reservas.html)
-let app;
