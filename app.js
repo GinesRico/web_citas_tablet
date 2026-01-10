@@ -603,6 +603,9 @@ class CalendarioApp {
 
   async init() {
     await this.verificarActualizaciones();
+    // Activar la vista guardada o por defecto (slots)
+    const vistaInicial = this.viewManager.vistaActual;
+    this.viewManager.cambiarVista(vistaInicial);
     // Polling ligero: solo verificar timestamp cada 10s
     this.startWebhookPolling();
     this.setupOrientationListener();

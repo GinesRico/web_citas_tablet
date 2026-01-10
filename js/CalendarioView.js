@@ -151,7 +151,7 @@ class CalendarioView {
         ${cita.phone ? `<span>${cita.phone}</span>` : ''}
       `;
       
-      // Drag events
+      // Drag events (mouse)
       cell.ondragstart = () => {
         this.draggedCita = cita;
         cell.classList.add('dragging');
@@ -161,6 +161,9 @@ class CalendarioView {
         this.draggedCita = null;
         cell.classList.remove('dragging');
       };
+      
+      // Touch events (móvil/tablet)
+      this.setupTouchDragForCell(cell, cita, fechaHora);
       
       // Click para ver detalles
       cell.onclick = () => {
@@ -228,6 +231,119 @@ class CalendarioView {
       console.error('Error moviendo cita:', error);
       alert('Error al mover la cita');
     }
+  }
+
+  /**
+   * Configura drag and drop táctil para móviles/tablets
+   */
+  setupTouchDragForCell(cell, cita, fechaHora) {
+    let longPressTimer;
+    let isDragging = false;
+    let dragElement;
+    let startX, startY;
+    let currentX, currentY;
+
+    const startDrag = (e) => {
+      isDragging = true;
+      this.draggedCita = cita;
+      
+      const touch = e.touches[0];
+      startX = touch.clientX;
+      startY = touch.clientY;
+      
+      // Crear elemento visual de arrastre
+      dragElement = cell.cloneNode(true);
+      dragElement.style.position = 'fixed';
+      dragElement.style.pointerEvents = 'none';
+      dragElement.style.opacity = '0.8';
+      dragElement.style.zIndex = '10000';
+      dragElement.style.width = cell.offsetWidth + 'px';
+      dragElement.style.left = startX + 'px';
+      dragElement.style.top = startY + 'px';
+      dragElement.classList.add('dragging');
+      document.body.appendChild(dragElement);
+      
+      cell.classList.add('dragging');
+    };
+
+    const moveDrag = (e) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      
+      const touch = e.touches[0];
+      currentX = touch.clientX;
+      currentY = touch.clientY;
+      
+      dragElement.style.left = currentX + 'px';
+      dragElement.style.top = currentY + 'px';
+      
+      // Detectar sobre qué celda está
+      const targetElement = document.elementFromPoint(currentX, currentY);
+      document.querySelectorAll('.cell.drop-target').forEach(el => {
+        el.classList.remove('drop-target');
+      });
+      
+      if (targetElement && targetElement.classList.contains('cell')) {
+        targetElement.classList.add('drop-target');
+      }
+    };
+
+    const endDrag = (e) => {
+      if (!isDragging) return;
+      
+      isDragging = false;
+      cell.classList.remove('dragging');
+      
+      if (dragElement) {
+        document.body.removeChild(dragElement);
+        dragElement = null;
+      }
+      
+      // Detectar dónde se soltó
+      const targetElement = document.elementFromPoint(currentX || startX, currentY || startY);
+      
+      document.querySelectorAll('.cell.drop-target').forEach(el => {
+        el.classList.remove('drop-target');
+      });
+      
+      if (targetElement && targetElement.classList.contains('cell')) {
+        const targetFechaHora = targetElement.dataset.fechahora;
+        if (targetFechaHora && this.draggedCita) {
+          this.moverCita(this.draggedCita, targetFechaHora);
+        }
+      }
+      
+      this.draggedCita = null;
+    };
+
+    // Long press para iniciar drag en móviles
+    cell.addEventListener('touchstart', (e) => {
+      longPressTimer = setTimeout(() => {
+        startDrag(e);
+      }, 500); // 500ms para detectar long press
+    }, { passive: false });
+
+    cell.addEventListener('touchmove', (e) => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+      }
+      moveDrag(e);
+    }, { passive: false });
+
+    cell.addEventListener('touchend', (e) => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+      }
+      endDrag(e);
+    }, { passive: true });
+
+    cell.addEventListener('touchcancel', (e) => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+      }
+      endDrag(e);
+    }, { passive: true });
+  }
   }
 
   /**
