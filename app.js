@@ -467,7 +467,7 @@ class EstadisticasService {
     const hoy = dayjs().format('YYYY-MM-DD');
     const diasSemana = this.app.diasLaborablesService.generarDiasLaborables(
       this.app.currentWeek,
-      CONFIG.DIAS_LABORABLES
+      CONFIG.DIAS_LABORABLES.length
     );
 
     // Fechas de la semana visible

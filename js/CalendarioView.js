@@ -20,7 +20,7 @@ class CalendarioView {
     
     const diasLaborables = this.app.diasLaborablesService.generarDiasLaborables(
       this.app.currentWeek,
-      CONFIG.DIAS_LABORABLES
+      CONFIG.DIAS_LABORABLES.length
     );
     
     const primerDia = diasLaborables[0];

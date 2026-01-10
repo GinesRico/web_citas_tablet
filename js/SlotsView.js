@@ -41,7 +41,7 @@ class SlotsView {
     // Obtener rango de fechas de la semana actual
     const diasLaborables = this.app.diasLaborablesService.generarDiasLaborables(
       this.app.currentWeek,
-      CONFIG.DIAS_LABORABLES
+      CONFIG.DIAS_LABORABLES.length
     );
     
     // Usar formato simple YYYY-MM-DD (como en el ejemplo que funciona)
