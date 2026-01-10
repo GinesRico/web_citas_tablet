@@ -17,11 +17,26 @@ const CONFIG = {
 class ReservasPublicas {
   constructor() {
     // Iniciar desde mañana (no permitir reservar hoy ni días anteriores)
-    const maniana = dayjs().add(1, 'day');
-    // Buscar el siguiente lunes desde mañana
-    this.fechaInicio = maniana.day() === 0 ? maniana.add(1, 'day') : // Si es domingo, ir al lunes
-                       maniana.day() === 6 ? maniana.add(2, 'day') : // Si es sábado, ir al lunes
-                       maniana.startOf('week').add(1, 'day'); // Lunes de esa semana
+    const hoy = dayjs().startOf('day');
+    const maniana = hoy.add(1, 'day');
+    
+    // Calcular el lunes de la semana de mañana (puede ser antes de hoy)
+    const diaSemana = maniana.day(); // 0=domingo, 1=lunes, etc
+    
+    if (diaSemana === 0) {
+      // Si mañana es domingo, ir al lunes siguiente
+      this.fechaInicio = maniana.add(1, 'day');
+    } else if (diaSemana === 6) {
+      // Si mañana es sábado, ir al lunes siguiente (2 días)
+      this.fechaInicio = maniana.add(2, 'day');
+    } else if (diaSemana === 1) {
+      // Si mañana es lunes, empezar desde ese lunes
+      this.fechaInicio = maniana;
+    } else {
+      // Si mañana es martes-viernes, retroceder al lunes de esa misma semana
+      this.fechaInicio = maniana.subtract(diaSemana - 1, 'day');
+    }
+    
     this.slotSeleccionado = null;
     this.init();
   }
@@ -50,8 +65,19 @@ class ReservasPublicas {
   }
 
   cambiarSemana(direccion) {
-    this.fechaInicio = this.fechaInicio.add(direccion, 'week');
+    const nuevaFecha = this.fechaInicio.add(direccion, 'week');
+    const hoy = dayjs().startOf('day');
+    const maniana = hoy.add(1, 'day');
+    const primerLunesValido = this.calcularPrimerLunesValido(maniana);
+    
+    // No permitir retroceder antes del primer lunes válido
+    if (direccion < 0 && nuevaFecha.isBefore(primerLunesValido, 'day')) {
+      return; // Bloquear navegación hacia atrás
+    }
+    
+    this.fechaInicio = nuevaFecha;
     this.actualizarRangoSemana();
+    this.actualizarBotones();
     this.cargarSlotsDisponibles();
   }
 
@@ -59,6 +85,42 @@ class ReservasPublicas {
     const fechaFin = this.fechaInicio.add(6, 'day');
     const rangoTexto = `${this.fechaInicio.format('D MMM')} - ${fechaFin.format('D MMM YYYY')}`;
     document.getElementById('rangoSemana').textContent = rangoTexto;
+    this.actualizarBotones();
+  }
+
+  actualizarBotones() {
+    const hoy = dayjs().startOf('day');
+    const maniana = hoy.add(1, 'day');
+    const btnAnterior = document.getElementById('btnSemanaAnterior');
+    
+    // Calcular la primera semana válida (que contiene mañana o es posterior)
+    const primerLunesValido = this.calcularPrimerLunesValido(maniana);
+    
+    // Deshabilitar botón anterior si estamos en la primera semana válida
+    if (this.fechaInicio.isSame(primerLunesValido, 'day') || this.fechaInicio.isBefore(primerLunesValido, 'day')) {
+      btnAnterior.disabled = true;
+      btnAnterior.style.opacity = '0.4';
+      btnAnterior.style.cursor = 'not-allowed';
+    } else {
+      btnAnterior.disabled = false;
+      btnAnterior.style.opacity = '1';
+      btnAnterior.style.cursor = 'pointer';
+    }
+  }
+  
+  calcularPrimerLunesValido(maniana) {
+    const diaSemana = maniana.day();
+    
+    if (diaSemana === 0) {
+      return maniana.add(1, 'day');
+    } else if (diaSemana === 6) {
+      return maniana.add(2, 'day');
+    } else if (diaSemana === 1) {
+      return maniana;
+    } else {
+      // Retroceder al lunes de la misma semana de mañana
+      return maniana.subtract(diaSemana - 1, 'day');
+    }
   }
 
   async cargarSlotsDisponibles() {
@@ -81,29 +143,26 @@ class ReservasPublicas {
       }
       
       const data = await response.json();
-
-      this.renderSlots(data.disponibles || []);
+      
+      // Filtrar slots de días pasados (incluido hoy)
+      const hoy = dayjs().startOf('day').format('YYYY-MM-DD');
+      const todosLosSlots = data.disponibles || data.slots_disponibles || [];
+      const slotsFuturos = todosLosSlots.filter(slot => {
+        return slot.fecha > hoy; // Solo mostrar slots de mañana en adelante
+      });
+      
+      this.mostrarSlots(slotsFuturos);
     } catch (error) {
-      console.error('Error cargando slots:', error);
-      container.innerHTML = `
-        <div class="sin-slots">
-          <span class="material-icons">error_outline</span>
-          <p>Error al cargar los horarios disponibles</p>
-        </div>
-      `;
+      console.error('Error al cargar slots:', error);
+      container.innerHTML = '<div class="error"><span class="material-icons">error</span><p>Error al cargar los horarios disponibles</p></div>';
     }
   }
 
-  renderSlots(slots) {
+  mostrarSlots(slots) {
     const container = document.getElementById('slotsContainer');
     
     if (!slots || slots.length === 0) {
-      container.innerHTML = `
-        <div class="sin-slots">
-          <span class="material-icons">event_busy</span>
-          <p>No hay horarios disponibles en esta semana</p>
-        </div>
-      `;
+      container.innerHTML = '<div class="no-slots"><span class="material-icons">event_busy</span><p>No hay horarios disponibles para esta semana</p></div>';
       return;
     }
     

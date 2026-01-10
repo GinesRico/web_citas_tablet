@@ -88,6 +88,11 @@
             <path fill="currentColor" d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
           </svg>
         </button>
+        <button class="btn-icon" onclick="logout()" title="Cerrar sesión">
+          <svg viewBox="0 0 24 24" width="24" height="24">
+            <path fill="currentColor" d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+          </svg>
+        </button>
       </div>
     </div>
     
@@ -228,7 +233,10 @@
       const emailAllowed = ALLOWED_EMAILS.includes(email);
       
       if (emailAllowed) {
-        sessionStorage.setItem("arvera_admin_logged_in", email);
+        // Guardar en localStorage para persistir la sesión
+        localStorage.setItem("arvera_admin_logged_in", email);
+        localStorage.setItem("arvera_admin_token", response.credential);
+        localStorage.setItem("arvera_admin_login_time", Date.now());
         showApp();
       } else {
         alert("Acceso denegado. Usuario no autorizado.");
@@ -243,10 +251,32 @@
       document.getElementById("app-container").style.display = "block";
     }
     
+    function logout() {
+      localStorage.removeItem("arvera_admin_logged_in");
+      localStorage.removeItem("arvera_admin_token");
+      localStorage.removeItem("arvera_admin_login_time");
+      location.reload();
+    }
+    
+    function checkSessionValidity() {
+      const loginTime = localStorage.getItem("arvera_admin_login_time");
+      if (!loginTime) return false;
+      
+      // Expirar sesión después de 30 días
+      const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+      const isExpired = (Date.now() - parseInt(loginTime)) > thirtyDays;
+      
+      if (isExpired) {
+        logout();
+        return false;
+      }
+      return true;
+    }
+    
     // Verificar si ya está logueado
     document.addEventListener("DOMContentLoaded", () => {
-      const logged = sessionStorage.getItem("arvera_admin_logged_in");
-      if (logged) {
+      const logged = localStorage.getItem("arvera_admin_logged_in");
+      if (logged && checkSessionValidity()) {
         showApp();
       }
     });
