@@ -213,8 +213,8 @@
   <script>
     // Función global para cerrar el modal
     function closeModal() {
-      if (window.app && app.ui) {
-        app.ui.closeModal();
+      if (window.app && window.app.ui) {
+        window.app.ui.closeModal();
       } else {
         document.getElementById('modal').classList.remove('active');
       }
