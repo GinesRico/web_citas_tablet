@@ -1055,7 +1055,7 @@ class CalendarioApp {
       
       <div id="mensajes"></div>
       
-      <form id="formAgendamiento" onsubmit="app.enviarAgendamiento(event, '${fecha}', '${hora}')">
+      <form id="formAgendamiento" onsubmit="window.app.enviarAgendamiento(event, '${fecha}', '${hora}'); return false;">
         <div class="form-group">
           <label for="nombre">Nombre completo *</label>
           <input type="text" id="nombre" name="nombre" required autofocus>
@@ -1142,7 +1142,7 @@ class CalendarioApp {
         </div>
         
         <div class="form-actions">
-          <button type="button" class="btn-secondary" onclick="app.closeModal()">Cancelar</button>
+          <button type="button" class="btn-secondary" onclick="closeModal()">Cancelar</button>
           <button type="submit" class="btn-primary" id="btnSubmit">Agendar Cita</button>
         </div>
       </form>

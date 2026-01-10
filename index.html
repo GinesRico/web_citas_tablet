@@ -211,12 +211,28 @@
   </div>
 
   <script>
-    // Función global para cerrar el modal
+    // Funciones globales para acciones del modal
     function closeModal() {
       if (window.app && window.app.ui) {
         window.app.ui.closeModal();
       } else {
         document.getElementById('modal').classList.remove('active');
+      }
+    }
+    
+    function eliminarCita(citaId) {
+      if (window.app && window.app.eliminarCita) {
+        window.app.eliminarCita(citaId);
+      } else {
+        console.error('App no disponible para eliminar cita');
+      }
+    }
+    
+    function modificarCita(citaId) {
+      if (window.app && window.app.modificarCita) {
+        window.app.modificarCita(citaId);
+      } else {
+        console.error('App no disponible para modificar cita');
       }
     }
   </script>
