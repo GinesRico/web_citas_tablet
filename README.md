@@ -111,8 +111,10 @@ vercel
 
 ```
 web_citas_tablet/
-├── index.html                  # Aplicación principal
-├── app.js                      # Lógica de la aplicación
+├── index.html                  # Panel de administración
+├── reservas.html               # Página de reservas públicas
+├── verificar-env.html          # Verificador de variables de entorno
+├── app.js                      # Lógica de la aplicación principal
 ├── vercel.json                 # Configuración de Vercel
 ├── manifest.json               # PWA manifest
 ├── sw.js                       # Service Worker
@@ -122,12 +124,22 @@ web_citas_tablet/
 ├── migrar.bat                  # Menú interactivo para Windows
 ├── requirements_migration.txt  # Dependencias para migración
 ├── MIGRACION.md               # Guía completa de migración
+├── VARIABLES_ENTORNO.md       # Guía de configuración de variables de entorno
+├── .gitignore                 # Archivos a ignorar en Git
 ├── api/                        # Documentación de la API
 │   └── README.md
 ├── css/
-│   └── styles.css              # Estilos de la aplicación
-├── icons/                      # Iconos de la PWA
-└── README.md                   # Este archivo
+│   ├── styles.css             # Estilos de la aplicación principal
+│   ├── stats-extras.css       # Estilos de estadísticas y extras
+│   └── reservas.css           # Estilos de la página pública
+├── js/
+│   ├── config.js              # Configuración centralizada (variables de entorno)
+│   ├── ViewManager.js         # Gestor de vistas
+│   ├── CalendarioView.js      # Vista de calendario
+│   ├── SlotsView.js           # Vista de slots disponibles
+│   └── reservas.js            # Lógica de reservas públicas
+├── icons/                     # Iconos de la PWA
+└── README.md                  # Este archivo
 ```
 
 ## 🎨 Mejoras Implementadas
@@ -154,15 +166,39 @@ web_citas_tablet/
 
 ## 🔧 Configuración
 
-La configuración de la API se encuentra en `CONFIG` al inicio de `app.js`:
+### Variables de Entorno
+
+La aplicación utiliza variables de entorno para gestionar configuraciones sensibles de forma segura. 
+
+**Configuración centralizada**: Todas las variables se gestionan desde `js/config.js`.
+
+**Variables disponibles**:
+- `API_BASE_URL`: URL de la API REST
+- `WEBHOOK_URL`: URL del webhook n8n
+- `CHECK_UPDATE_URL`: URL para verificar actualizaciones
+- `SUPABASE_URL`: URL del proyecto Supabase
+- `SUPABASE_ANON_KEY`: Clave anónima de Supabase
+
+**Configurar en Vercel**:
+1. Ve a [Vercel Dashboard](https://vercel.com/dashboard) → Settings → Environment Variables
+2. Agrega cada variable con su valor correspondiente
+3. Re-despliega el proyecto
+
+Para instrucciones detalladas, consulta [VARIABLES_ENTORNO.md](VARIABLES_ENTORNO.md)
+
+**Verificar configuración**:
+Abre `verificar-env.html` en tu navegador para ver el estado de las variables de entorno.
+
+### Configuración de Horarios y Slots
+
+Los horarios y duración de citas se configuran en `js/config.js`:
 
 ```javascript
 const CONFIG = {
-  API_BASE_URL: 'https://api-citas-seven.vercel.app/api',
-  AUTO_REFRESH_INTERVAL: 30 * 1000, // 30 segundos
-  HORARIOS: [['08:30', '12:15'], ['15:45', '18:00']],
+  HORARIOS: [['08:30', '12:15'], ['15:45', '18:00']], // Rangos horarios
   DURACION_CITA: 45, // minutos
-  DIAS_LABORABLES: 7 // 7 días laborables
+  DIAS_LABORABLES: [1, 2, 3, 4, 5], // Lunes a Viernes
+  TIMEZONE: 'Europe/Madrid'
 };
 ```
 

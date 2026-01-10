@@ -1,15 +1,13 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "**/*",
-      "use": "@vercel/static"
-    }
-  ],
   "rewrites": [
     {
       "source": "/reservas",
       "destination": "/reservas.html"
+    },
+    {
+      "source": "/api/env",
+      "destination": "/api/env.py"
     }
   ],
   "headers": [

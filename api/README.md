@@ -194,6 +194,48 @@ Configura en **Vercel Dashboard → Settings → Environment Variables**:
 ```
 SUPABASE_URL=https://wgsqgvxoipnbetxinzgb.supabase.co
 SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+API_TOKEN=tu-token-seguro-generado
+WEBHOOK_URL=https://tu-webhook-url.com/endpoint
+```
+
+**Token de API (Seguridad):**
+- `API_TOKEN` (opcional pero recomendado): Token de seguridad para proteger los endpoints
+- Genera un token seguro ejecutando: `python generar_token.py`
+- Si no se configura, la API funciona sin autenticación (modo retrocompatible)
+- Envía el token en las peticiones usando uno de estos headers:
+  - `Authorization: Bearer TU_TOKEN`
+  - `X-API-Key: TU_TOKEN`
+
+**Endpoints protegidos:** GET/POST /api/citas, GET/PUT/DELETE /api/citas/{id}, GET /api/disponibles
+
+**Endpoints públicos:** GET /api/cancelar (no requiere token)
+
+**Webhooks:**
+- `WEBHOOK_URL` (opcional): URL donde se enviarán notificaciones de cambios en citas
+- Si no se configura, las operaciones funcionan normalmente sin enviar webhooks
+- El webhook recibe un POST con el evento y los datos de la cita afectada
+
+**Eventos de webhook enviados:**
+- `cita.creada` - Cuando se crea una nueva cita
+- `cita.actualizada` - Cuando se modifica una cita existente
+- `cita.eliminada` - Cuando se elimina una cita
+- `cita.cancelada` - Cuando se cancela una cita por token
+
+**Formato del payload:**
+```json
+{
+  "event": "cita.creada",
+  "timestamp": 1704900000,
+  "data": {
+    "Id": "20260109123456-abc123",
+    "Nombre": "Juan Pérez",
+    "Telefono": "600000000",
+    "Servicio": "Revisión",
+    "startTime": "2026-01-20T10:00:00+00:00",
+    "endTime": "2026-01-20T11:00:00+00:00",
+    "Estado": "Confirmada"
+  }
+}
 ```
 
 ### Base de Datos (Supabase)

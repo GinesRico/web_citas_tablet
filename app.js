@@ -1,36 +1,8 @@
 /****************************************
  * CONFIGURACIÓN GLOBAL
+ * La configuración ahora se carga desde js/config.js
+ * que lee variables de entorno de Vercel
  ****************************************/
-const CONFIG = {
-  // API REST
-  API_BASE_URL: 'https://api-citas-seven.vercel.app/api',
-  
-  // Webhook para notificaciones (n8n)
-  WEBHOOK_URL: 'https://webhook.arvera.es/webhook/cal-event',
-  CHECK_UPDATE_URL: 'https://webhook.arvera.es/webhook/check-update',
-  
-  // Supabase Realtime (sincronización instantánea)
-  SUPABASE_URL: 'https://pvvxwibhqowjcdxazalx.supabase.co',
-  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB2dnh3aWJocW93amNkeGF6YWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzYzNTY4MjIsImV4cCI6MjA1MTkzMjgyMn0.RJLCqGTiNx-bQFa8tXrM1B9j6wqP8wCEA7xGI1vPw4I',
-  
-  // TIMEZONE: Zona horaria para todas las operaciones
-  TIMEZONE: 'Europe/Madrid',
-  
-  // HORARIOS: Define los rangos de trabajo en HORA LOCAL (Europe/Madrid)
-  // Formato: [['hora_inicio', 'hora_fin'], ['hora_inicio', 'hora_fin']]
-  // Se usa tanto para el grid del calendario como para consultar slots disponibles en la API
-  // El backend interpreta estos horarios en el timezone correcto
-  HORARIOS: [
-    ['08:30', '12:15'],  // Horario de mañana (hora local Madrid)
-    ['15:45', '18:00']   // Horario de tarde (hora local Madrid)
-  ],
-  
-  // DURACION_CITA: Duración de cada slot en minutos
-  // Se usa para generar el grid del calendario y consultar slots disponibles en la API
-  DURACION_CITA: 45, // minutos
-  
-  DIAS_LABORABLES: 7 // Días laborables a mostrar en el calendario (lunes a viernes)
-};
 
 /****************************************
  * SERVICIOS (Single Responsibility)
@@ -131,12 +103,19 @@ class DeviceDetectionService {
 class ApiService {
   async fetch(url, options = {}) {
     try {
+      const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers
+      };
+      
+      // Agregar API Key si está configurada
+      if (CONFIG.API_KEY) {
+        headers['X-API-Key'] = CONFIG.API_KEY;
+      }
+      
       const response = await fetch(url, {
         ...options,
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers
-        }
+        headers
       });
       return response;
     } catch (error) {
@@ -1264,11 +1243,8 @@ class CalendarioApp {
   }
 }
 
-// Inicializar aplicación
+// Inicializar aplicación (se llamará desde showApp() después de cargar config)
 let app;
-document.addEventListener('DOMContentLoaded', () => {
-  app = new CalendarioApp();
-});
 
 // Service Worker para PWA (solo en servidor, no en file://)
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {

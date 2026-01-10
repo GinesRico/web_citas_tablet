@@ -52,7 +52,12 @@ class SlotsView {
     const horarios = CONFIG.HORARIOS.map(h => h.join('-')).join(',');
     const url = `${CONFIG.API_BASE_URL}/disponibles?startDate=${startDate}&endDate=${endDate}&duracion=${CONFIG.DURACION_CITA}&horarios=${horarios}&timezone=${CONFIG.TIMEZONE}`;
     
-    const response = await fetch(url);
+    const headers = { 'Content-Type': 'application/json' };
+    if (CONFIG.API_KEY) {
+      headers['X-API-Key'] = CONFIG.API_KEY;
+    }
+    
+    const response = await fetch(url, { headers });
     
     if (!response.ok) {
       const errorText = await response.text();

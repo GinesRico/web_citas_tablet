@@ -41,6 +41,9 @@
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="css/stats-extras.css">
   
+  <!-- Configuración (lee variables de entorno) -->
+  <script src="js/config.js"></script>
+  
   <!-- Day.js -->
   <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/isSameOrBefore.js"></script>
@@ -300,12 +303,26 @@
       document.getElementById("login-screen").style.display = "none";
       document.getElementById("app-container").style.display = "block";
       
-      // Configurar listener del botón copiar URL después de mostrar la app
-      setTimeout(() => {
-        if (window.app && app.setupCopiarUrlListener) {
-          app.setupCopiarUrlListener();
+      // Esperar a que la configuración se cargue antes de inicializar la app
+      configPromise.then(() => {
+        // Inicializar la aplicación
+        if (!window.app) {
+          window.app = new CalendarioApp();
         }
-      }, 100);
+        
+        // Configurar listener del botón copiar URL
+        setTimeout(() => {
+          if (window.app && app.setupCopiarUrlListener) {
+            app.setupCopiarUrlListener();
+          }
+        }, 100);
+      }).catch(err => {
+        console.error('Error cargando configuración:', err);
+        // Inicializar de todos modos con valores por defecto
+        if (!window.app) {
+          window.app = new CalendarioApp();
+        }
+      });
     }
     
     function logout() {

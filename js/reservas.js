@@ -1,15 +1,8 @@
 /****************************************
  * CONFIGURACIÓN
+ * La configuración ahora se carga desde js/config.js
+ * que lee variables de entorno de Vercel
  ****************************************/
-const CONFIG = {
-  API_BASE_URL: 'https://api-citas-seven.vercel.app/api',
-  TIMEZONE: 'Europe/Madrid',
-  DURACION_CITA: 45, // minutos
-  HORARIOS: [
-    ['08:30', '12:15'],
-    ['15:45', '18:00']
-  ]
-};
 
 /****************************************
  * APLICACIÓN DE RESERVAS PÚBLICAS
@@ -135,7 +128,12 @@ class ReservasPublicas {
       const horarios = CONFIG.HORARIOS.map(h => h.join('-')).join(',');
       const url = `${CONFIG.API_BASE_URL}/disponibles?startDate=${startDate}&endDate=${endDate}&duracion=${CONFIG.DURACION_CITA}&horarios=${horarios}&timezone=${CONFIG.TIMEZONE}`;
       
-      const response = await fetch(url);
+      const headers = { 'Content-Type': 'application/json' };
+      if (CONFIG.API_KEY) {
+        headers['X-API-Key'] = CONFIG.API_KEY;
+      }
+      
+      const response = await fetch(url, { headers });
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -372,9 +370,14 @@ class ReservasPublicas {
         notes: document.getElementById('notes').value.trim() || ''
       };
 
+      const headers = { 'Content-Type': 'application/json' };
+      if (CONFIG.API_KEY) {
+        headers['X-API-Key'] = CONFIG.API_KEY;
+      }
+
       const response = await fetch(`${CONFIG.API_BASE_URL}/citas`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(datos)
       });
 
@@ -402,8 +405,5 @@ function cerrarModal() {
   app.cerrarModal();
 }
 
-// Inicializar app
+// Variable global para la app (se inicializará desde reservas.html)
 let app;
-document.addEventListener('DOMContentLoaded', () => {
-  app = new ReservasPublicas();
-});
