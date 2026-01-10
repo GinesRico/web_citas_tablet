@@ -779,7 +779,11 @@ class CalendarioApp {
 
   async cargarCitas() {
     try {
-      const citas = await this.api.getCitas();
+      // Calcular rango de 30 días (2 semanas antes y 2 semanas después)
+      const inicio = this.currentWeek.subtract(14, 'day').format('YYYY-MM-DD');
+      const fin = this.currentWeek.add(16, 'day').format('YYYY-MM-DD');
+      
+      const citas = await this.api.getCitas(inicio, fin);
       
       // Validar que sea un array
       this.citas = Array.isArray(citas) ? citas : [];
@@ -1226,8 +1230,8 @@ class CalendarioApp {
   }
 
   changeWeek(offset) {
-    // Calcular nueva fecha
-    let nuevaFecha = this.currentWeek.add(offset * CONFIG.DIAS_LABORABLES, 'day');
+    // Calcular nueva fecha (avanzar/retroceder 7 días laborables)
+    let nuevaFecha = this.currentWeek.add(offset * 7, 'day');
     // Ajustar a día laborable si cae en fin de semana
     this.currentWeek = this.diasLaborablesService.obtenerSiguienteDiaLaborable(nuevaFecha);
     // Actualizar la vista actual (calendario o slots)

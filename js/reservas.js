@@ -359,15 +359,15 @@ class ReservasPublicas {
       const endLocal = startLocal.add(CONFIG.DURACION_CITA, 'minute');
 
       const datos = {
-        start: startLocal.toISOString(),
-        end: endLocal.toISOString(),
-        name: document.getElementById('nombre').value.trim(),
-        phone: telefonoCompleto,
-        email: document.getElementById('email').value.trim() || '',
-        service: servicios.join(', '),
-        matricula: document.getElementById('matricula').value.trim() || '',
-        modelo: document.getElementById('modelo').value.trim() || '',
-        notes: document.getElementById('notes').value.trim() || ''
+        Nombre: document.getElementById('nombre').value.trim(),
+        Telefono: telefonoCompleto,
+        Email: document.getElementById('email').value.trim() || '',
+        Servicio: servicios.join(', '),
+        startTime: startLocal.toISOString(),
+        endTime: endLocal.toISOString(),
+        Matricula: document.getElementById('matricula').value.trim() || '',
+        Modelo: document.getElementById('modelo').value.trim() || '',
+        Notas: document.getElementById('notes').value.trim() || ''
       };
 
       const headers = { 'Content-Type': 'application/json' };
