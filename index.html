@@ -39,6 +39,7 @@
   
   <!-- Estilos CSS -->
   <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/stats-extras.css">
   
   <!-- Day.js -->
   <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
@@ -152,7 +153,7 @@
           <span id="statToday" class="stat-value">0</span>
         </div>
         <div class="stat-item">
-          <span class="stat-label">Esta semana</span>
+          <span class="stat-label">Semana visible</span>
           <span id="statWeek" class="stat-value">0</span>
         </div>
         <div class="stat-item">
@@ -164,7 +165,17 @@
           <span id="statService" class="stat-value">—</span>
         </div>
       </div>
-    </aside>
+      <!-- URL de Reservas -->
+      <div class="stats">
+        <h3>Reservas Públicas</h3>
+        <div class="url-copiar-container">
+          <input type="text" id="urlReservas" class="url-input" value="https://tablet.arvera.es/reservas" readonly>
+          <button id="btnCopiarUrl" class="btn-copiar-url" title="Copiar URL">
+            <span class="material-icons">content_copy</span>
+          </button>
+        </div>
+        <p class="url-ayuda">Comparte este enlace con tus clientes para que reserven citas online.</p>
+      </div>    </aside>
 
     <!-- Vista Calendario -->
     <div id="vistaCalendario" class="vista-container active">
@@ -175,6 +186,21 @@
 
     <!-- Vista Slots Disponibles -->
     <div id="vistaSlots" class="vista-container slots-view">
+      <!-- Estadísticas de la semana (solo visible en vista Slots) -->
+      <div class="stats-slots-header">
+        <div class="stat-inline">
+          <span class="stat-label">Semana visible:</span>
+          <span id="statWeekSlots" class="stat-value-inline">0</span>
+        </div>
+        <div class="stat-inline">
+          <span class="stat-label">Ocupación:</span>
+          <span id="statOccupancySlots" class="stat-badge-inline success">0%</span>
+        </div>
+        <div class="stat-inline">
+          <span class="stat-label">Servicio principal:</span>
+          <span id="statServiceSlots" class="stat-value-inline">—</span>
+        </div>
+      </div>
       <div class="slots-container">
         <div id="slotsGrid" class="slots-grid">
           <!-- Los slots se generarán dinámicamente aquí -->

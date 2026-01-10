@@ -491,29 +491,32 @@ class EstadisticasService {
       CONFIG.DIAS_LABORABLES
     );
 
+    // Fechas de la semana visible
+    const fechasSemana = diasSemana.map(d => d.format('YYYY-MM-DD'));
+
     // Citas de hoy
     const citasHoy = this.app.citas.filter(c => {
       return dayjs.utc(c.start).local().format('YYYY-MM-DD') === hoy;
     }).length;
 
-    // Citas de esta semana
-    const fechasSemana = diasSemana.map(d => d.format('YYYY-MM-DD'));
+    // Citas de la semana VISIBLE (no "esta semana")
     const citasSemana = this.app.citas.filter(c => {
       const fechaCita = dayjs.utc(c.start).local().format('YYYY-MM-DD');
       return fechasSemana.includes(fechaCita);
     }).length;
 
-    // Ocupación (slots ocupados vs disponibles)
+    // Ocupación (slots ocupados vs disponibles) de la semana VISIBLE
     const horariosService = new HorarioService();
     const slotsDisponibles = horariosService.generar().length * diasSemana.length;
     const ocupacion = slotsDisponibles > 0 
       ? Math.round((citasSemana / slotsDisponibles) * 100) 
       : 0;
 
-    // Servicio más solicitado
+    // Servicio más solicitado de la semana VISIBLE
     const servicios = {};
     this.app.citas.forEach(c => {
-      if (c.service) {
+      const fechaCita = dayjs.utc(c.start).local().format('YYYY-MM-DD');
+      if (fechasSemana.includes(fechaCita) && c.service) {
         servicios[c.service] = (servicios[c.service] || 0) + 1;
       }
     });
@@ -532,6 +535,7 @@ class EstadisticasService {
   render() {
     const stats = this.calcular();
 
+    // Elementos del sidebar
     const elementos = {
       statToday: document.getElementById('statToday'),
       statWeek: document.getElementById('statWeek'),
@@ -539,6 +543,14 @@ class EstadisticasService {
       statService: document.getElementById('statService')
     };
 
+    // Elementos de la vista Slots
+    const elementosSlots = {
+      statWeekSlots: document.getElementById('statWeekSlots'),
+      statOccupancySlots: document.getElementById('statOccupancySlots'),
+      statServiceSlots: document.getElementById('statServiceSlots')
+    };
+
+    // Actualizar sidebar
     if (elementos.statToday) elementos.statToday.textContent = stats.citasHoy;
     if (elementos.statWeek) elementos.statWeek.textContent = stats.citasSemana;
     
@@ -556,6 +568,25 @@ class EstadisticasService {
 
     if (elementos.statService) {
       elementos.statService.textContent = stats.servicioTop;
+    }
+
+    // Actualizar vista Slots
+    if (elementosSlots.statWeekSlots) elementosSlots.statWeekSlots.textContent = stats.citasSemana;
+    
+    if (elementosSlots.statOccupancySlots) {
+      elementosSlots.statOccupancySlots.textContent = `${stats.ocupacion}%`;
+      elementosSlots.statOccupancySlots.className = 'stat-badge-inline';
+      if (stats.ocupacion >= 80) {
+        elementosSlots.statOccupancySlots.classList.add('error');
+      } else if (stats.ocupacion >= 50) {
+        elementosSlots.statOccupancySlots.classList.add('warning');
+      } else {
+        elementosSlots.statOccupancySlots.classList.add('success');
+      }
+    }
+
+    if (elementosSlots.statServiceSlots) {
+      elementosSlots.statServiceSlots.textContent = stats.servicioTop;
     }
   }
 }
@@ -611,6 +642,36 @@ class CalendarioApp {
     this.setupOrientationListener();
     this.setupTabsListener();
     this.setupVisibilityListener();
+    this.setupCopiarUrlListener();
+  }
+
+  setupCopiarUrlListener() {
+    const btnCopiarUrl = document.getElementById('btnCopiarUrl');
+    const inputUrl = document.getElementById('urlReservas');
+    
+    if (btnCopiarUrl && inputUrl) {
+      btnCopiarUrl.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(inputUrl.value);
+          
+          // Feedback visual
+          const icon = btnCopiarUrl.querySelector('.material-icons');
+          const originalIcon = icon.textContent;
+          icon.textContent = 'check';
+          btnCopiarUrl.classList.add('copiado');
+          
+          setTimeout(() => {
+            icon.textContent = originalIcon;
+            btnCopiarUrl.classList.remove('copiado');
+          }, 2000);
+        } catch (err) {
+          // Fallback para navegadores antiguos
+          inputUrl.select();
+          document.execCommand('copy');
+          alert('URL copiada al portapapeles');
+        }
+      });
+    }
   }
 
   startWebhookPolling() {

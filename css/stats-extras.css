@@ -1,0 +1,146 @@
+/* ==========================================
+   ESTADÍSTICAS INLINE (Vista Slots)
+   ========================================== */
+
+.stats-slots-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 16px 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+}
+
+.stat-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stat-inline .stat-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.stat-value-inline {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.stat-badge-inline {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.stat-badge-inline.success {
+  background: var(--success-light);
+  color: var(--success-dark);
+}
+
+.stat-badge-inline.warning {
+  background: var(--warning-light);
+  color: #e65100;
+}
+
+.stat-badge-inline.error {
+  background: var(--error-light);
+  color: var(--error-color);
+}
+
+/* ==========================================
+   COPIAR URL DE RESERVAS
+   ========================================== */
+
+.url-copiar-container {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.url-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: 'Roboto Mono', monospace;
+  background: #f8f9fa;
+  color: var(--text-primary);
+  cursor: text;
+}
+
+.url-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  background: var(--surface);
+}
+
+.btn-copiar-url {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  background: var(--primary-color);
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-copiar-url:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-copiar-url:active {
+  transform: translateY(0);
+}
+
+.btn-copiar-url.copiado {
+  background: var(--success-color);
+}
+
+.btn-copiar-url .material-icons {
+  font-size: 20px;
+}
+
+.url-ayuda {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
+/* ==========================================
+   RESPONSIVE
+   ========================================== */
+
+@media (max-width: 768px) {
+  .stats-slots-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .stat-inline {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .url-copiar-container {
+    flex-direction: column;
+  }
+
+  .btn-copiar-url {
+    width: 100%;
+  }
+}
