@@ -229,7 +229,6 @@ class SlotsView {
    * Maneja la selección de un slot
    */
   seleccionarSlot(slot) {
-    console.log('Slot seleccionado:', slot);
     // Convertir de UTC a hora local para el formulario
     const startLocal = dayjs.utc(slot.startTime).tz(CONFIG.TIMEZONE);
     const fecha = startLocal.format('YYYY-MM-DD');

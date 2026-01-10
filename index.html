@@ -333,7 +333,6 @@
       // Esperar a que la configuración se cargue antes de inicializar la app
       configPromise
         .then(() => {
-          console.log('CONFIG cargado, inicializando app...');
           // Inicializar la aplicación después de que CONFIG esté listo
           if (!window.app) {
             window.app = new CalendarioApp();

@@ -92,9 +92,6 @@ class DeviceDetectionService {
       body.classList.add('device-desktop');
     }
     
-    // Debug info (puedes ver en consola)
-    console.log('Device Detection:', device);
-    
     return device;
   }
 }
@@ -997,21 +994,21 @@ class CalendarioApp {
 
   mostrarDetalleCita(cita, hora) {
     const botonesAccion = `
-      <div class="cita-acciones" style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border-color);display:flex;gap:8px;justify-content:flex-end;">
-        <button class="btn-accion btn-accion-llamar" onclick="window.location.href='tel:${cita.phone}'" title="Llamar">
+      <div class="cita-acciones" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border-color);display:flex;gap:8px;justify-content:center;flex-wrap:nowrap;">
+        <button class="btn-accion btn-accion-llamar" onclick="window.location.href='tel:${cita.phone}'" title="Llamar" style="flex:1;min-width:0;">
           <span class="material-icons">phone</span>
         </button>
-        <button class="btn-accion btn-accion-modificar" onclick="modificarCita('${cita.id}')" title="Modificar">
+        <button class="btn-accion btn-accion-modificar" onclick="modificarCita('${cita.id}')" title="Modificar" style="flex:1;min-width:0;">
           <span class="material-icons">edit</span>
         </button>
-        <button class="btn-accion btn-accion-eliminar" onclick="eliminarCita('${cita.id}')" title="Eliminar">
+        <button class="btn-accion btn-accion-eliminar" onclick="eliminarCita('${cita.id}')" title="Eliminar" style="flex:1;min-width:0;">
           <span class="material-icons">delete</span>
         </button>
       </div>
     `;
     
     const html = `
-      <h3>${hora} - ${dayjs.utc(cita.start).local().format('dddd')}</h3>
+      <h3 style="margin-bottom:16px;">${hora} - ${dayjs.utc(cita.start).local().format('dddd')}</h3>
       <p><b>Nombre:</b> ${cita.name}</p>
       <p><b>Teléfono:</b> <a href="tel:${cita.phone}" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">${cita.phone}</a></p>
       ${cita.email ? `<p><b>Email:</b> ${cita.email}</p>` : ''}
@@ -1201,8 +1198,6 @@ class CalendarioApp {
         modelo: document.getElementById('modelo').value.trim() || '',
         notes: document.getElementById('notes').value.trim() || ''
       };
-      
-      console.log('Datos a enviar:', datos);
       
       // Enviar a la API unificada
       const response = await this.api.agendarCita(datos);

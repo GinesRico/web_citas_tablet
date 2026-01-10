@@ -44,7 +44,6 @@ async function loadEnvFromServer() {
       CONFIG.DIAS_LABORABLES = envVars.DIAS_LABORABLES || CONFIG.DIAS_LABORABLES;
       CONFIG.POLL_INTERVAL = envVars.POLL_INTERVAL || CONFIG.POLL_INTERVAL;
       
-      console.log('✅ Configuración completa cargada desde Vercel:', CONFIG);
       return true;
     }
   } catch (error) {
