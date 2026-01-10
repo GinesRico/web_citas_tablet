@@ -582,7 +582,7 @@ class CalendarioApp {
     this.ui = new UIService();
     this.horarioService = new HorarioService();
     this.miniCalendar = new MiniCalendarioService(this);
-    this.estadisticas = new EstadisticasService(this);
+    this.estadisticasService = new EstadisticasService(this);
     
     // Detectar y aplicar clases de dispositivo
     this.deviceInfo = DeviceDetectionService.applyDeviceClasses();
