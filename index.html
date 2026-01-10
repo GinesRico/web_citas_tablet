@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#1a73e8">
   <meta name="description" content="Sistema de gestión de citas para Arvera Neumáticos">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Citas Arvera">
@@ -217,6 +218,37 @@
   <script>
     const ALLOWED_EMAILS = ["arvera1982@gmail.com"];
     
+    // Helper para localStorage con fallback si está bloqueado
+    const storage = {
+      setItem: function(key, value) {
+        try {
+          localStorage.setItem(key, value);
+        } catch(e) {
+          console.warn('localStorage bloqueado, usando memoria temporal:', e);
+          this._memory = this._memory || {};
+          this._memory[key] = value;
+        }
+      },
+      getItem: function(key) {
+        try {
+          return localStorage.getItem(key);
+        } catch(e) {
+          console.warn('localStorage bloqueado, usando memoria temporal:', e);
+          this._memory = this._memory || {};
+          return this._memory[key] || null;
+        }
+      },
+      removeItem: function(key) {
+        try {
+          localStorage.removeItem(key);
+        } catch(e) {
+          this._memory = this._memory || {};
+          delete this._memory[key];
+        }
+      },
+      _memory: {}
+    };
+    
     function parseJwt(token) {
       try {
         const base64Url = token.split('.')[1];
@@ -240,9 +272,9 @@
       
       if (emailAllowed) {
         // Guardar en localStorage para persistir la sesión
-        localStorage.setItem("arvera_admin_logged_in", email);
-        localStorage.setItem("arvera_admin_token", response.credential);
-        localStorage.setItem("arvera_admin_login_time", Date.now());
+        storage.setItem("arvera_admin_logged_in", email);
+        storage.setItem("arvera_admin_token", response.credential);
+        storage.setItem("arvera_admin_login_time", Date.now());
         showApp();
       } else {
         alert("Acceso denegado. Usuario no autorizado.");
@@ -258,14 +290,14 @@
     }
     
     function logout() {
-      localStorage.removeItem("arvera_admin_logged_in");
-      localStorage.removeItem("arvera_admin_token");
-      localStorage.removeItem("arvera_admin_login_time");
+      storage.removeItem("arvera_admin_logged_in");
+      storage.removeItem("arvera_admin_token");
+      storage.removeItem("arvera_admin_login_time");
       location.reload();
     }
     
     function checkSessionValidity() {
-      const loginTime = localStorage.getItem("arvera_admin_login_time");
+      const loginTime = storage.getItem("arvera_admin_login_time");
       if (!loginTime) return false;
       
       // Expirar sesión después de 30 días
@@ -281,7 +313,7 @@
     
     // Verificar si ya está logueado
     document.addEventListener("DOMContentLoaded", () => {
-      const logged = localStorage.getItem("arvera_admin_logged_in");
+      const logged = storage.getItem("arvera_admin_logged_in");
       if (logged && checkSessionValidity()) {
         showApp();
       }

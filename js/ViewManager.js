@@ -3,11 +3,32 @@
  * Maneja el cambio entre vista calendario y vista slots
  */
 
+// Helper para localStorage con fallback si está bloqueado
+const safeStorage = {
+  setItem: function(key, value) {
+    try {
+      localStorage.setItem(key, value);
+    } catch(e) {
+      this._memory = this._memory || {};
+      this._memory[key] = value;
+    }
+  },
+  getItem: function(key) {
+    try {
+      return localStorage.getItem(key);
+    } catch(e) {
+      this._memory = this._memory || {};
+      return this._memory[key] || null;
+    }
+  },
+  _memory: {}
+};
+
 class ViewManager {
   constructor(app) {
     this.app = app;
     // Cargar última vista guardada o usar 'slots' por defecto
-    this.vistaActual = localStorage.getItem('arvera_ultima_vista') || 'slots';
+    this.vistaActual = safeStorage.getItem('arvera_ultima_vista') || 'slots';
     this.calendarioView = new CalendarioView(app);
     this.slotsView = new SlotsView(app);
     this.setupSwipeGestures();
@@ -23,7 +44,7 @@ class ViewManager {
     this.vistaActual = vista;
     
     // Guardar preferencia del usuario
-    localStorage.setItem('arvera_ultima_vista', vista);
+    safeStorage.setItem('arvera_ultima_vista', vista);
     
     // Actualizar tabs activos
     document.querySelectorAll('.tab-btn').forEach(btn => {

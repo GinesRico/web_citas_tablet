@@ -344,7 +344,6 @@ class CalendarioView {
       endDrag(e);
     }, { passive: true });
   }
-  }
 
   /**
    * Elimina una cita
