@@ -65,12 +65,21 @@ body {
   gap: 24px;
 }
 
-/* Grupo izquierdo: botones navegación + título */
-.header-left {
+/* Tabs a la izquierda */
+.view-tabs {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+}
+
+/* Navegación de semana en el centro */
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  justify-content: center;
 }
 
 .title {
@@ -80,15 +89,6 @@ body {
   letter-spacing: -0.3px;
   white-space: nowrap;
   margin: 0;
-}
-
-/* Tabs en el centro */
-.view-tabs {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  justify-content: center;
 }
 
 /* Acciones a la derecha */

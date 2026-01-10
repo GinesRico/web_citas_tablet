@@ -37,8 +37,10 @@ class ViewManager {
   /**
    * Cambia entre vistas
    */
-  cambiarVista(vista) {
-    if (this.vistaActual === vista) return;
+  cambiarVista(vista, forzarRender = false) {
+    const esIgual = this.vistaActual === vista;
+    
+    if (esIgual && !forzarRender) return;
     
     const prevVista = this.vistaActual;
     this.vistaActual = vista;
@@ -58,15 +60,18 @@ class ViewManager {
     vistaCalendario.classList.toggle('active', vista === 'calendario');
     vistaSlots.classList.toggle('active', vista === 'slots');
     
-    // Solo renderizar la nueva vista si no se ha renderizado antes
-    // o si cambiamos el rango de fechas
+    // Renderizar la vista correspondiente
     if (vista === 'slots') {
-      // Solo render si viene de calendario (primera vez o cambio de rango)
-      if (prevVista === 'calendario') {
+      // Renderizar si es forzado (inicialización) o viene de calendario
+      if (forzarRender || prevVista === 'calendario') {
         this.slotsView.render();
       }
+    } else if (vista === 'calendario') {
+      // El calendario se renderiza en verificarActualizaciones
+      if (forzarRender) {
+        this.calendarioView.render();
+      }
     }
-    // Para calendario no es necesario re-render, ya está renderizado
   }
 
   /**

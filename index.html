@@ -74,22 +74,7 @@
   <!-- Header -->
   <header class="header">
     <div class="header-content">
-      <!-- Título y navegación de semana (izquierda) -->
-      <div class="header-left">
-        <button class="btn-icon" onclick="app.changeWeek(-1)" title="Semana anterior">
-          <svg viewBox="0 0 24 24" width="24" height="24">
-            <path fill="currentColor" d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-          </svg>
-        </button>
-        <h1 id="title" class="title">Calendario de Citas</h1>
-        <button class="btn-icon" onclick="app.changeWeek(1)" title="Semana siguiente">
-          <svg viewBox="0 0 24 24" width="24" height="24">
-            <path fill="currentColor" d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
-          </svg>
-        </button>
-      </div>
-
-      <!-- Tabs de navegación (centro) -->
+      <!-- Tabs de navegación (izquierda) -->
       <div class="view-tabs" id="viewTabs">
         <button class="tab-btn" data-view="calendario">
           <svg viewBox="0 0 24 24" width="20" height="20">
@@ -102,6 +87,21 @@
             <path fill="currentColor" d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
           </svg>
           <span>Disponibles</span>
+        </button>
+      </div>
+
+      <!-- Navegación de semana (centro) -->
+      <div class="header-left">
+        <button class="btn-icon" onclick="app.changeWeek(-1)" title="Semana anterior">
+          <svg viewBox="0 0 24 24" width="24" height="24">
+            <path fill="currentColor" d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+          </svg>
+        </button>
+        <h1 id="title" class="title">Calendario de Citas</h1>
+        <button class="btn-icon" onclick="app.changeWeek(1)" title="Semana siguiente">
+          <svg viewBox="0 0 24 24" width="24" height="24">
+            <path fill="currentColor" d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+          </svg>
         </button>
       </div>
 
@@ -167,14 +167,14 @@
         </div>
       </div>
       <!-- URL de Reservas -->
-      <div class="stats">
+      <div class="stats reservas-publicas">
         <h3>Reservas Públicas</h3>
         <div class="url-copiar-container">
           <input type="text" id="urlReservas" class="url-input" value="https://tablet.arvera.es/reservas" readonly>
-          <button id="btnCopiarUrl" class="btn-copiar-url" title="Copiar URL">
-            <span class="material-icons">content_copy</span>
-          </button>
         </div>
+        <button id="btnCopiarUrl" class="btn-copiar-url" title="Copiar URL">
+          <span class="material-icons">content_copy</span>
+        </button>
         <p class="url-ayuda">Comparte este enlace con tus clientes para que reserven citas online.</p>
       </div>    </aside>
 

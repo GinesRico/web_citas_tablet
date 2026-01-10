@@ -608,9 +608,9 @@ class CalendarioApp {
 
   async init() {
     await this.verificarActualizaciones();
-    // Activar la vista guardada o por defecto (slots)
+    // Activar la vista guardada o por defecto (slots) y forzar render inicial
     const vistaInicial = this.viewManager.vistaActual;
-    this.viewManager.cambiarVista(vistaInicial);
+    this.viewManager.cambiarVista(vistaInicial, true); // true = forzar render
     // Polling ligero: solo verificar timestamp cada 10s
     this.startWebhookPolling();
     this.setupOrientationListener();
