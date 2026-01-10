@@ -255,7 +255,7 @@ class ReservasPublicas {
 
       <div id="mensajes"></div>
 
-      <form id="formReserva" onsubmit="app.enviarReserva(event)">
+      <form id="formReserva" onsubmit="window.reservas.enviarReserva(event); return false;">
         <div class="form-group">
           <label for="nombre">Nombre completo *</label>
           <input type="text" id="nombre" required placeholder="Tu nombre">
