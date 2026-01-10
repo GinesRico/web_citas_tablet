@@ -94,13 +94,18 @@
   <script src="js/reservas.js"></script>
   <script>
     // Esperar a que la configuración se cargue antes de inicializar
-    configPromise.then(() => {
-      new ReservasPublicas();
-    }).catch(err => {
-      console.error('Error cargando configuración:', err);
-      // Inicializar de todos modos con valores por defecto
-      new ReservasPublicas();
-    });
+    if (typeof configPromise !== 'undefined') {
+      configPromise.then(() => {
+        console.log('CONFIG listo, inicializando ReservasPublicas...');
+        window.reservas = new ReservasPublicas();
+      }).catch(err => {
+        console.error('Error cargando configuración:', err);
+        // Inicializar de todos modos con valores por defecto
+        window.reservas = new ReservasPublicas();
+      });
+    } else {
+      console.error('configPromise no está definido. Asegúrate de que js/config.js esté cargado.');
+    }
   </script>
 </body>
 </html>

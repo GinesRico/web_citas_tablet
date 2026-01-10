@@ -95,13 +95,13 @@
 
       <!-- Navegación de semana (centro) -->
       <div class="header-left">
-        <button class="btn-icon" onclick="app.changeWeek(-1)" title="Semana anterior">
+        <button class="btn-icon" onclick="window.app.changeWeek(-1)" title="Semana anterior">
           <svg viewBox="0 0 24 24" width="24" height="24">
             <path fill="currentColor" d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
           </svg>
         </button>
         <h1 id="title" class="title">Calendario de Citas</h1>
-        <button class="btn-icon" onclick="app.changeWeek(1)" title="Semana siguiente">
+        <button class="btn-icon" onclick="window.app.changeWeek(1)" title="Semana siguiente">
           <svg viewBox="0 0 24 24" width="24" height="24">
             <path fill="currentColor" d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
           </svg>
@@ -134,12 +134,12 @@
         <div class="mini-calendar-header">
           <h3 id="miniCalendarMonth">Enero 2026</h3>
           <div class="mini-calendar-nav">
-            <button onclick="app.miniCalendar.prevMonth()" title="Mes anterior">
+            <button onclick="window.app.miniCalendar.prevMonth()" title="Mes anterior">
               <svg viewBox="0 0 24 24" width="16" height="16">
                 <path fill="currentColor" d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
               </svg>
             </button>
-            <button onclick="app.miniCalendar.nextMonth()" title="Mes siguiente">
+            <button onclick="window.app.miniCalendar.nextMonth()" title="Mes siguiente">
               <svg viewBox="0 0 24 24" width="16" height="16">
                 <path fill="currentColor" d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
               </svg>
