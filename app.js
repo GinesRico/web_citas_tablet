@@ -543,13 +543,6 @@ class EstadisticasService {
       statService: document.getElementById('statService')
     };
 
-    // Elementos de la vista Slots
-    const elementosSlots = {
-      statWeekSlots: document.getElementById('statWeekSlots'),
-      statOccupancySlots: document.getElementById('statOccupancySlots'),
-      statServiceSlots: document.getElementById('statServiceSlots')
-    };
-
     // Actualizar sidebar
     if (elementos.statToday) elementos.statToday.textContent = stats.citasHoy;
     if (elementos.statWeek) elementos.statWeek.textContent = stats.citasSemana;
@@ -568,25 +561,6 @@ class EstadisticasService {
 
     if (elementos.statService) {
       elementos.statService.textContent = stats.servicioTop;
-    }
-
-    // Actualizar vista Slots
-    if (elementosSlots.statWeekSlots) elementosSlots.statWeekSlots.textContent = stats.citasSemana;
-    
-    if (elementosSlots.statOccupancySlots) {
-      elementosSlots.statOccupancySlots.textContent = `${stats.ocupacion}%`;
-      elementosSlots.statOccupancySlots.className = 'stat-badge-inline';
-      if (stats.ocupacion >= 80) {
-        elementosSlots.statOccupancySlots.classList.add('error');
-      } else if (stats.ocupacion >= 50) {
-        elementosSlots.statOccupancySlots.classList.add('warning');
-      } else {
-        elementosSlots.statOccupancySlots.classList.add('success');
-      }
-    }
-
-    if (elementosSlots.statServiceSlots) {
-      elementosSlots.statServiceSlots.textContent = stats.servicioTop;
     }
   }
 }
@@ -642,6 +616,7 @@ class CalendarioApp {
     this.setupOrientationListener();
     this.setupTabsListener();
     this.setupVisibilityListener();
+    // Configurar botón copiar URL (se llamará también desde showApp por si acaso)
     this.setupCopiarUrlListener();
   }
 
@@ -649,13 +624,19 @@ class CalendarioApp {
     const btnCopiarUrl = document.getElementById('btnCopiarUrl');
     const inputUrl = document.getElementById('urlReservas');
     
-    if (btnCopiarUrl && inputUrl) {
-      btnCopiarUrl.addEventListener('click', async () => {
-        try {
-          await navigator.clipboard.writeText(inputUrl.value);
-          
-          // Feedback visual
-          const icon = btnCopiarUrl.querySelector('.material-icons');
+    if (!btnCopiarUrl || !inputUrl) {
+      console.warn('Elementos de copiar URL no encontrados');
+      return;
+    }
+    
+    btnCopiarUrl.addEventListener('click', async () => {
+      try {
+        // Copiar al portapapeles
+        await navigator.clipboard.writeText(inputUrl.value);
+        
+        // Feedback visual
+        const icon = btnCopiarUrl.querySelector('.material-icons');
+        if (icon) {
           const originalIcon = icon.textContent;
           icon.textContent = 'check';
           btnCopiarUrl.classList.add('copiado');
@@ -664,14 +645,21 @@ class CalendarioApp {
             icon.textContent = originalIcon;
             btnCopiarUrl.classList.remove('copiado');
           }, 2000);
-        } catch (err) {
-          // Fallback para navegadores antiguos
+        }
+      } catch (err) {
+        console.error('Error al copiar:', err);
+        // Fallback para navegadores antiguos
+        try {
           inputUrl.select();
           document.execCommand('copy');
           alert('URL copiada al portapapeles');
+        } catch(e) {
+          alert('No se pudo copiar la URL. Por favor, cópiala manualmente.');
         }
-      });
-    }
+      }
+    });
+    
+    console.log('✓ Listener de copiar URL configurado');
   }
 
   startWebhookPolling() {
@@ -800,6 +788,8 @@ class CalendarioApp {
       await this.cargarCitas();
       // Actualizar la vista actual (calendario o slots)
       this.viewManager.renderVistaActual();
+      // Actualizar estadísticas
+      this.estadisticasService.render();
       this.ui.setLastUpdate(`✓ Sincronizado - ${dayjs().format('HH:mm:ss')}`);
     } catch(e) {
       console.error('Error verificando actualizaciones:', e);
@@ -817,6 +807,8 @@ class CalendarioApp {
       this.ui.setLastUpdate(`Última actualización: ${dayjs().format('HH:mm:ss')}`);
       // Renderizar la vista actual (delegado al ViewManager)
       this.viewManager.renderVistaActual();
+      // Actualizar estadísticas
+      this.estadisticasService.render();
     } catch(e) {
       console.error('Error cargando citas:', e);
       this.citas = [];

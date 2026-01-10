@@ -186,21 +186,6 @@
 
     <!-- Vista Slots Disponibles -->
     <div id="vistaSlots" class="vista-container slots-view">
-      <!-- Estadísticas de la semana (solo visible en vista Slots) -->
-      <div class="stats-slots-header">
-        <div class="stat-inline">
-          <span class="stat-label">Semana visible:</span>
-          <span id="statWeekSlots" class="stat-value-inline">0</span>
-        </div>
-        <div class="stat-inline">
-          <span class="stat-label">Ocupación:</span>
-          <span id="statOccupancySlots" class="stat-badge-inline success">0%</span>
-        </div>
-        <div class="stat-inline">
-          <span class="stat-label">Servicio principal:</span>
-          <span id="statServiceSlots" class="stat-value-inline">—</span>
-        </div>
-      </div>
       <div class="slots-container">
         <div id="slotsGrid" class="slots-grid">
           <!-- Los slots se generarán dinámicamente aquí -->
@@ -313,6 +298,13 @@
     function showApp() {
       document.getElementById("login-screen").style.display = "none";
       document.getElementById("app-container").style.display = "block";
+      
+      // Configurar listener del botón copiar URL después de mostrar la app
+      setTimeout(() => {
+        if (window.app && app.setupCopiarUrlListener) {
+          app.setupCopiarUrlListener();
+        }
+      }, 100);
     }
     
     function logout() {
