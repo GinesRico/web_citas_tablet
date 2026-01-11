@@ -122,6 +122,7 @@ class CalendarioView {
    */
   buscarCitaEnSlot(fecha, hora) {
     return this.app.citas.find(c => {
+      if (c.estado !== 'Confirmada') return false;
       if (!c.start) return false;
       const citaFechaHora = dayjs.utc(c.start).tz(CONFIG.TIMEZONE);
       const citaFecha = citaFechaHora.format('YYYY-MM-DD');
