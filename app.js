@@ -599,6 +599,8 @@ class CalendarioApp {
     this.setupVisibilityListener();
     // Configurar botón copiar URL (se llamará también desde showApp por si acaso)
     this.setupCopiarUrlListener();
+    // Configurar URL de reservas públicas dinámicamente
+    this.setupReservasUrl();
   }
 
   setupCopiarUrlListener() {
@@ -641,6 +643,18 @@ class CalendarioApp {
     });
 
     console.log('✓ Listener de copiar URL configurado');
+  }
+
+  setupReservasUrl() {
+    const inputUrl = document.getElementById('urlReservas');
+    if (inputUrl) {
+      // Construir URL dinámica basada en la ubicación actual
+      const baseUrl = `${window.location.protocol}//${window.location.host}`;
+      inputUrl.value = `${baseUrl}/reservas.html`;
+      console.log('✓ URL de reservas configurada:', inputUrl.value);
+    } else {
+      console.warn('Input urlReservas no encontrado');
+    }
   }
 
   startWebhookPolling() {
