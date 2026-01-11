@@ -14,21 +14,21 @@ class DeviceDetectionService {
     const ua = navigator.userAgent.toLowerCase();
     const platform = navigator.platform?.toLowerCase() || '';
     const maxTouchPoints = navigator.maxTouchPoints || 0;
-    
+
     // Detectar Android
     const isAndroid = ua.includes('android');
-    
+
     // Detectar iOS/iPadOS (mejorado para iPads modernos)
-    const isIOS = /ipad|iphone|ipod/.test(ua) || 
-                  (platform === 'macintel' && maxTouchPoints > 1); // iPadOS 13+ se identifica como Mac
-    
+    const isIOS = /ipad|iphone|ipod/.test(ua) ||
+      (platform === 'macintel' && maxTouchPoints > 1); // iPadOS 13+ se identifica como Mac
+
     // Detectar iPad específicamente (incluyendo iPadOS 13+)
-    const isIPad = ua.includes('ipad') || 
-                   (platform === 'macintel' && maxTouchPoints > 1);
-    
+    const isIPad = ua.includes('ipad') ||
+      (platform === 'macintel' && maxTouchPoints > 1);
+
     // Detectar iPhone
     const isIPhone = ua.includes('iphone') || ua.includes('ipod');
-    
+
     // Detectar tablets (Android, iPad, o por características)
     const isTablet = (
       (isAndroid && !ua.includes('mobile')) || // Android tablet
@@ -39,7 +39,7 @@ class DeviceDetectionService {
       // Tablets Android grandes
       (isAndroid && window.innerWidth >= 600)
     );
-    
+
     // Detectar móvil
     const isMobile = (
       (isAndroid && ua.includes('mobile')) || // Android móvil
@@ -47,11 +47,11 @@ class DeviceDetectionService {
       (maxTouchPoints > 0 && window.innerWidth < 768 && !isTablet) || // Touch pequeño
       window.innerWidth < 600
     );
-    
+
     // Desktop: no es tablet ni móvil Y (no tiene touch points O tiene pantalla muy grande)
-    const isDesktop = !isTablet && !isMobile && 
-                      (maxTouchPoints === 0 || window.innerWidth > 1366);
-    
+    const isDesktop = !isTablet && !isMobile &&
+      (maxTouchPoints === 0 || window.innerWidth > 1366);
+
     return {
       isAndroid,
       isIOS,
@@ -65,15 +65,15 @@ class DeviceDetectionService {
       screenWidth: window.innerWidth
     };
   }
-  
+
   static applyDeviceClasses() {
     const device = this.getDeviceType();
     const body = document.body;
-    
+
     // Limpiar clases anteriores
-    body.classList.remove('device-mobile', 'device-tablet', 'device-desktop', 
-                         'device-android-tablet', 'device-ipad', 'device-iphone');
-    
+    body.classList.remove('device-mobile', 'device-tablet', 'device-desktop',
+      'device-android-tablet', 'device-ipad', 'device-iphone');
+
     // Aplicar clases según dispositivo
     if (device.isMobile) {
       body.classList.add('device-mobile');
@@ -91,7 +91,7 @@ class DeviceDetectionService {
     } else {
       body.classList.add('device-desktop');
     }
-    
+
     return device;
   }
 }
@@ -104,12 +104,12 @@ class ApiService {
         'Content-Type': 'application/json',
         ...options.headers
       };
-      
+
       // Agregar API Key si está configurada
       if (CONFIG.API_KEY) {
         headers['X-API-Key'] = CONFIG.API_KEY;
       }
-      
+
       const response = await fetch(url, {
         ...options,
         headers
@@ -129,7 +129,7 @@ class ApiService {
     const res = await this.fetch(url);
     if (!res.ok) throw new Error('Error al obtener citas');
     const data = await res.json();
-    
+
     // Normalizar los datos de la API al formato esperado por la app
     return data.map(cita => ({
       id: cita.Id,
@@ -337,7 +337,7 @@ class DiasLaborablesService {
   generarDiasLaborables(fechaInicio, cantidad) {
     const dias = [];
     let diaActual = this.obtenerSiguienteDiaLaborable(fechaInicio);
-    
+
     while (dias.length < cantidad) {
       dias.push(diaActual);
       diaActual = diaActual.add(1, 'day');
@@ -346,7 +346,7 @@ class DiasLaborablesService {
         diaActual = diaActual.add(1, 'day');
       }
     }
-    
+
     return dias;
   }
 }
@@ -361,7 +361,7 @@ class MiniCalendarioService {
   render() {
     const grid = document.getElementById('miniCalendarGrid');
     const header = document.getElementById('miniCalendarMonth');
-    
+
     if (!grid || !header) return;
 
     header.textContent = this.currentMonth.format('MMMM YYYY');
@@ -380,7 +380,7 @@ class MiniCalendarioService {
     const primerDia = this.currentMonth.startOf('month');
     const ultimoDia = this.currentMonth.endOf('month');
     const primerDiaSemana = primerDia.day() === 0 ? 7 : primerDia.day(); // Lunes = 1
-    
+
     // Días del mes anterior
     for (let i = 1; i < primerDiaSemana; i++) {
       const day = primerDia.subtract(primerDiaSemana - i, 'day');
@@ -406,7 +406,7 @@ class MiniCalendarioService {
     const dayCell = document.createElement('div');
     dayCell.className = 'mini-calendar-day';
     dayCell.textContent = dia.format('D');
-    
+
     if (otherMonth) {
       dayCell.classList.add('other-month');
     }
@@ -423,10 +423,11 @@ class MiniCalendarioService {
 
     // Marcar si hay citas
     const tieneCitas = this.app.citas.some(c => {
+      if (c.estado !== 'Confirmada') return false;
       const fechaCita = dayjs.utc(c.start).local().format('YYYY-MM-DD');
       return fechaCita === dia.format('YYYY-MM-DD');
     });
-    
+
     if (tieneCitas) {
       dayCell.classList.add('has-citas');
     }
@@ -473,11 +474,13 @@ class EstadisticasService {
 
     // Citas de hoy
     const citasHoy = this.app.citas.filter(c => {
+      if (c.estado !== 'Confirmada') return false;
       return dayjs.utc(c.start).local().format('YYYY-MM-DD') === hoy;
     }).length;
 
     // Citas de la semana VISIBLE (no "esta semana")
     const citasSemana = this.app.citas.filter(c => {
+      if (c.estado !== 'Confirmada') return false;
       const fechaCita = dayjs.utc(c.start).local().format('YYYY-MM-DD');
       return fechasSemana.includes(fechaCita);
     }).length;
@@ -485,13 +488,14 @@ class EstadisticasService {
     // Ocupación (slots ocupados vs disponibles) de la semana VISIBLE
     const horariosService = new HorarioService();
     const slotsDisponibles = horariosService.generar().length * diasSemana.length;
-    const ocupacion = slotsDisponibles > 0 
-      ? Math.round((citasSemana / slotsDisponibles) * 100) 
+    const ocupacion = slotsDisponibles > 0
+      ? Math.round((citasSemana / slotsDisponibles) * 100)
       : 0;
 
     // Servicio más solicitado de la semana VISIBLE
     const servicios = {};
     this.app.citas.forEach(c => {
+      if (c.estado !== 'Confirmada') return;
       const fechaCita = dayjs.utc(c.start).local().format('YYYY-MM-DD');
       if (fechasSemana.includes(fechaCita) && c.service) {
         servicios[c.service] = (servicios[c.service] || 0) + 1;
@@ -523,7 +527,7 @@ class EstadisticasService {
     // Actualizar sidebar
     if (elementos.statToday) elementos.statToday.textContent = stats.citasHoy;
     if (elementos.statWeek) elementos.statWeek.textContent = stats.citasSemana;
-    
+
     if (elementos.statOccupancy) {
       elementos.statOccupancy.textContent = `${stats.ocupacion}%`;
       elementos.statOccupancy.className = 'stat-badge';
@@ -552,7 +556,7 @@ class CalendarioApp {
     this.currentWeek = this.diasLaborablesService.obtenerSiguienteDiaLaborable(dayjs().startOf('day'));
     this.citas = [];
     this.draggedCita = null;
-    
+
     // Servicios
     this.api = new ApiService();
     this.storage = new StorageService();
@@ -560,16 +564,16 @@ class CalendarioApp {
     this.horarioService = new HorarioService();
     this.miniCalendar = new MiniCalendarioService(this);
     this.estadisticasService = new EstadisticasService(this);
-    
+
     // Detectar y aplicar clases de dispositivo
     this.deviceInfo = DeviceDetectionService.applyDeviceClasses();
-    
+
     // Gestor de vistas (calendario y slots)
     this.viewManager = new ViewManager(this);
-    
+
     // Timestamp de última sincronización (para webhook)
     this.lastUpdateTimestamp = null;
-    
+
     // Inicializar cliente de Supabase para Realtime
     // DESHABILITADO: Configurar primero en supabase.com/dashboard
     /*
@@ -579,7 +583,7 @@ class CalendarioApp {
     );
     this.realtimeChannel = null;
     */
-    
+
     this.init();
   }
 
@@ -600,24 +604,24 @@ class CalendarioApp {
   setupCopiarUrlListener() {
     const btnCopiarUrl = document.getElementById('btnCopiarUrl');
     const inputUrl = document.getElementById('urlReservas');
-    
+
     if (!btnCopiarUrl || !inputUrl) {
       console.warn('Elementos de copiar URL no encontrados');
       return;
     }
-    
+
     btnCopiarUrl.addEventListener('click', async () => {
       try {
         // Copiar al portapapeles
         await navigator.clipboard.writeText(inputUrl.value);
-        
+
         // Feedback visual
         const icon = btnCopiarUrl.querySelector('.material-icons');
         if (icon) {
           const originalIcon = icon.textContent;
           icon.textContent = 'check';
           btnCopiarUrl.classList.add('copiado');
-          
+
           setTimeout(() => {
             icon.textContent = originalIcon;
             btnCopiarUrl.classList.remove('copiado');
@@ -630,12 +634,12 @@ class CalendarioApp {
           inputUrl.select();
           document.execCommand('copy');
           alert('URL copiada al portapapeles');
-        } catch(e) {
+        } catch (e) {
           alert('No se pudo copiar la URL. Por favor, cópiala manualmente.');
         }
       }
     });
-    
+
     console.log('✓ Listener de copiar URL configurado');
   }
 
@@ -652,7 +656,7 @@ class CalendarioApp {
     try {
       const response = await fetch(CONFIG.CHECK_UPDATE_URL);
       const data = await response.json();
-      
+
       // Si hay nuevo timestamp, actualizar citas
       if (data.updatedAt && data.updatedAt !== this.lastUpdateTimestamp) {
         console.log('🔄 Cambios detectados, actualizando...');
@@ -743,19 +747,19 @@ class CalendarioApp {
 
   setupOrientationListener() {
     let currentWidth = window.innerWidth;
-    
+
     // Detectar cambios de orientación/tamaño
     window.addEventListener('resize', () => {
       const newWidth = window.innerWidth;
       const wasDesktop = currentWidth > 768;
       const isDesktop = newWidth > 768;
-      
+
       // Re-renderizar solo si cambió entre móvil ↔ desktop
       if (wasDesktop !== isDesktop) {
         console.log('Cambio de orientación detectado, re-renderizando...');
         this.render();
       }
-      
+
       currentWidth = newWidth;
     });
   }
@@ -768,7 +772,7 @@ class CalendarioApp {
       // Actualizar estadísticas
       this.estadisticasService.render();
       this.ui.setLastUpdate(`✓ Sincronizado - ${dayjs().format('HH:mm:ss')}`);
-    } catch(e) {
+    } catch (e) {
       console.error('Error verificando actualizaciones:', e);
       this.ui.setLastUpdate('⚠️ Error al sincronizar');
     }
@@ -779,18 +783,18 @@ class CalendarioApp {
       // Calcular rango de 30 días (2 semanas antes y 2 semanas después)
       const inicio = this.currentWeek.subtract(14, 'day').format('YYYY-MM-DD');
       const fin = this.currentWeek.add(16, 'day').format('YYYY-MM-DD');
-      
+
       const citas = await this.api.getCitas(inicio, fin);
-      
+
       // Validar que sea un array
       this.citas = Array.isArray(citas) ? citas : [];
-      
+
       this.ui.setLastUpdate(`Última actualización: ${dayjs().format('HH:mm:ss')}`);
       // Renderizar la vista actual (delegado al ViewManager)
       this.viewManager.renderVistaActual();
       // Actualizar estadísticas
       this.estadisticasService.render();
-    } catch(e) {
+    } catch (e) {
       console.error('Error cargando citas:', e);
       this.citas = [];
       this.ui.setLastUpdate('❌ Error al cargar');
@@ -812,10 +816,10 @@ class CalendarioApp {
 
   renderDesktop(grid, diasLaborables) {
     const hoy = dayjs().format('YYYY-MM-DD');
-    
+
     // Cabecera vacía para columna de horas
     grid.appendChild(document.createElement('div'));
-    
+
     // Cabeceras de días
     diasLaborables.forEach(day => {
       const h = document.createElement('div');
@@ -837,20 +841,20 @@ class CalendarioApp {
       diasLaborables.forEach(day => {
         const fecha = day.format('YYYY-MM-DD');
         const fechaHoraSlot = `${fecha} ${hora}`;
-        
+
         // Buscar cita que empiece en esta hora (o dentro del slot de 45 min)
         const cita = this.citas.find(c => {
           if (!c.start) return false;
           const citaFechaHora = dayjs.utc(c.start).tz(CONFIG.TIMEZONE);
           const citaFecha = citaFechaHora.format('YYYY-MM-DD');
-          
+
           // Verificar que sea el mismo día
           if (citaFecha !== fecha) return false;
-          
+
           // Crear el rango del slot (hora actual + 45 minutos)
           const slotInicio = dayjs(`${fecha} ${hora}`);
           const slotFin = slotInicio.add(CONFIG.DURACION_CITA, 'minute');
-          
+
           // La cita debe comenzar dentro de este slot
           // isSameOrAfter no existe, usar: !isBefore
           return !citaFechaHora.isBefore(slotInicio) && citaFechaHora.isBefore(slotFin);
@@ -864,11 +868,11 @@ class CalendarioApp {
 
   renderMobile(grid, diasLaborables) {
     const hoy = dayjs().format('YYYY-MM-DD');
-    
+
     // Para cada día, crear un bloque vertical
     diasLaborables.forEach(day => {
       const fecha = day.format('YYYY-MM-DD');
-      
+
       // Cabecera del día
       const dayHeader = document.createElement('div');
       dayHeader.className = 'cell day-header';
@@ -881,7 +885,7 @@ class CalendarioApp {
       // Horarios de este día
       this.horarioService.generar().forEach(hora => {
         const fechaHoraSlot = `${fecha} ${hora}`;
-        
+
         // Celda de hora
         const timeCell = document.createElement('div');
         timeCell.className = 'cell time';
@@ -904,13 +908,13 @@ class CalendarioApp {
   createCell(fecha, hora, cita) {
     const cell = document.createElement('div');
     const isLocal = cita?.isLocal || false;
-    
+
     if (cita) {
       cell.className = 'cell ' + (isLocal ? 'busy-local' : 'busy');
     } else {
       cell.className = 'cell free';
     }
-    
+
     cell.dataset.slot = `${fecha} ${hora}`;
 
     if (cita) {
@@ -930,17 +934,17 @@ class CalendarioApp {
       ${cita.modelo ? `<span>${cita.modelo}</span>` : ''}
       ${cita.matricula ? `<span>${cita.matricula}</span>` : ''}
     `;
-    
+
     cell.ondragstart = () => {
       this.draggedCita = cita;
       cell.classList.add('dragging');
     };
-    
+
     cell.ondragend = () => {
       this.draggedCita = null;
       cell.classList.remove('dragging');
     };
-    
+
     cell.onclick = () => this.mostrarDetalleCita(cita, hora);
   }
 
@@ -950,29 +954,29 @@ class CalendarioApp {
     timeLabel.className = 'time-label';
     timeLabel.textContent = hora;
     cell.appendChild(timeLabel);
-    
+
     cell.ondragover = (e) => {
       e.preventDefault();
       cell.classList.add('drop-target');
     };
-    
+
     cell.ondragleave = () => {
       cell.classList.remove('drop-target');
     };
-    
+
     cell.ondrop = async () => {
       cell.classList.remove('drop-target');
       if (this.draggedCita) {
         const nuevaFechaHora = dayjs(cell.dataset.slot);
         const nuevaEndTime = nuevaFechaHora.add(CONFIG.DURACION_CITA, 'minute');
-        
+
         try {
           // Actualizar en la API
           const response = await this.api.actualizarCita(this.draggedCita.id, {
             startTime: nuevaFechaHora.toISOString(),
             endTime: nuevaEndTime.toISOString()
           });
-          
+
           if (response.ok) {
             // Actualizar localmente
             this.draggedCita.start = nuevaFechaHora.toISOString();
@@ -988,7 +992,7 @@ class CalendarioApp {
         }
       }
     };
-    
+
     cell.onclick = () => this.abrirFormularioAgendamiento(fecha, hora);
   }
 
@@ -1006,7 +1010,7 @@ class CalendarioApp {
         </button>
       </div>
     `;
-    
+
     const html = `
       <h3 style="margin-bottom:16px;">${hora} - ${dayjs.utc(cita.start).local().format('dddd')}</h3>
       <p><b>Nombre:</b> ${cita.name}</p>
@@ -1148,20 +1152,20 @@ class CalendarioApp {
         </div>
       </form>
     `;
-    
+
     this.ui.showModal(formulario);
   }
 
   async enviarAgendamiento(event, fecha, hora) {
     event.preventDefault();
-    
+
     const btnSubmit = document.getElementById('btnSubmit');
     const mensajes = document.getElementById('mensajes');
-    
+
     btnSubmit.disabled = true;
     btnSubmit.textContent = 'Agendando...';
     mensajes.innerHTML = '';
-    
+
     try {
       // Obtener servicios
       const servicios = [];
@@ -1171,22 +1175,22 @@ class CalendarioApp {
       if (document.getElementById('servicio-alineacion').checked) {
         servicios.push('Alineación');
       }
-      
+
       if (servicios.length === 0) {
         mensajes.innerHTML = '<div class="error-message" style="display:block;">Por favor, selecciona al menos un servicio.</div>';
         btnSubmit.disabled = false;
         btnSubmit.textContent = 'Agendar Cita';
         return;
       }
-      
+
       // Combinar prefijo + teléfono
       const prefijo = document.getElementById('prefijo').value;
       const numeroTelefono = document.getElementById('telefono').value.trim().replace(/\s/g, '');
       const telefonoCompleto = `${prefijo}${numeroTelefono}`;
-      
+
       const fechaHora = dayjs(`${fecha} ${hora}`);
       const endTime = fechaHora.add(CONFIG.DURACION_CITA, 'minute');
-      
+
       const datos = {
         start: fechaHora.toISOString(),
         end: endTime.toISOString(),
@@ -1198,10 +1202,10 @@ class CalendarioApp {
         modelo: document.getElementById('modelo').value.trim() || '',
         notes: document.getElementById('notes').value.trim() || ''
       };
-      
+
       // Enviar a la API unificada
       const response = await this.api.agendarCita(datos);
-      
+
       if (response.ok) {
         mensajes.innerHTML = '<div class="success-message" style="display:block;">✓ Cita agendada correctamente</div>';
         // Notificar al webhook que hubo cambios
