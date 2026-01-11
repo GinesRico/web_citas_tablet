@@ -599,8 +599,6 @@ class CalendarioApp {
     this.setupVisibilityListener();
     // Configurar botón copiar URL (se llamará también desde showApp por si acaso)
     this.setupCopiarUrlListener();
-    // Configurar URL de reservas públicas dinámicamente
-    this.setupReservasUrl();
   }
 
   setupCopiarUrlListener() {

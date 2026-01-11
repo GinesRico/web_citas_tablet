@@ -347,12 +347,20 @@
           if (!window.app) {
             window.app = new CalendarioApp();
           }
+          // Configurar URL de reservas después de que la app esté visible
+          if (window.app && window.app.setupReservasUrl) {
+            window.app.setupReservasUrl();
+          }
         })
         .catch(err => {
           console.error('Error cargando configuración:', err);
           // Inicializar de todos modos con valores por defecto
           if (!window.app) {
             window.app = new CalendarioApp();
+          }
+          // Configurar URL de reservas después de que la app esté visible
+          if (window.app && window.app.setupReservasUrl) {
+            window.app.setupReservasUrl();
           }
         });
     }
