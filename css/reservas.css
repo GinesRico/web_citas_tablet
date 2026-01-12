@@ -519,13 +519,38 @@ body {
 }
 
 /* ===== RESPONSIVE ===== */
-@media (max-width: 1024px) {
+/* Modo embed: mantener horizontal hasta tablets pequeñas */
+.embed-mode .calcom-container {
+  grid-template-columns: 1fr 380px;
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  /* Escritorio pequeño: mantener layout horizontal */
+  .calcom-container {
+    grid-template-columns: 300px 1fr;
+  }
+
+  .business-sidebar {
+    padding: 32px 24px;
+  }
+
+  .booking-main {
+    grid-template-columns: 1fr 320px;
+  }
+
+  .calendar-section {
+    padding: 32px 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Tablets y móviles: layout vertical */
   .calcom-container {
     grid-template-columns: 1fr;
   }
 
   .business-sidebar {
-    padding: 32px 24px;
+    padding: 24px 20px;
   }
 
   .booking-main {
