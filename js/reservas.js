@@ -1,55 +1,55 @@
 /****************************************
- * CONFIGURACIÓN
- * La configuración ahora se carga desde js/config.js
- * que lee variables de entorno de Vercel
- ****************************************/
-
-/****************************************
  * APLICACIÓN DE RESERVAS PÚBLICAS
+ * Diseño estilo Cal.com con calendario mensual
  ****************************************/
 class ReservasPublicas {
   constructor() {
-    // Iniciar desde mañana (no permitir reservar hoy ni días anteriores)
-    const hoy = dayjs().startOf('day');
-    const maniana = hoy.add(1, 'day');
-    
-    // Calcular el lunes de la semana de mañana (puede ser antes de hoy)
-    const diaSemana = maniana.day(); // 0=domingo, 1=lunes, etc
-    
-    if (diaSemana === 0) {
-      // Si mañana es domingo, ir al lunes siguiente
-      this.fechaInicio = maniana.add(1, 'day');
-    } else if (diaSemana === 6) {
-      // Si mañana es sábado, ir al lunes siguiente (2 días)
-      this.fechaInicio = maniana.add(2, 'day');
-    } else if (diaSemana === 1) {
-      // Si mañana es lunes, empezar desde ese lunes
-      this.fechaInicio = maniana;
-    } else {
-      // Si mañana es martes-viernes, retroceder al lunes de esa misma semana
-      this.fechaInicio = maniana.subtract(diaSemana - 1, 'day');
-    }
-    
+    // Configuración inicial
+    this.currentMonth = dayjs().startOf('month');
+    this.selectedDate = null;
     this.slotSeleccionado = null;
+    this.timeFormat = '12'; // 12 o 24
+    this.slotsCache = {}; // Cache de slots por mes
+    
     this.init();
   }
 
   async init() {
     this.setupEventListeners();
-    this.actualizarRangoSemana();
-    await this.cargarSlotsDisponibles();
+    await this.renderCalendar();
+    
+    // Seleccionar automáticamente mañana (si es laborable)
+    const tomorrow = dayjs().add(1, 'day');
+    if (this.isWeekday(tomorrow)) {
+      this.selectDate(tomorrow);
+    } else {
+      // Si mañana es sábado/domingo, seleccionar el siguiente lunes
+      const nextMonday = tomorrow.day(1).add(tomorrow.day() === 0 ? 0 : 7, 'day');
+      this.selectDate(nextMonday);
+    }
   }
 
   setupEventListeners() {
-    document.getElementById('btnSemanaAnterior').addEventListener('click', () => {
-      this.cambiarSemana(-1);
+    // Navegación del calendario
+    document.getElementById('btnMesAnterior').addEventListener('click', () => {
+      this.changeMonth(-1);
     });
 
-    document.getElementById('btnSemanaSiguiente').addEventListener('click', () => {
-      this.cambiarSemana(1);
+    document.getElementById('btnMesSiguiente').addEventListener('click', () => {
+      this.changeMonth(1);
     });
 
-    // Cerrar modal al hacer clic fuera
+    // Toggle de formato de hora
+    document.querySelectorAll('.format-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        this.timeFormat = e.target.dataset.format;
+        this.renderSlots();
+      });
+    });
+
+    // Cerrar modal
     document.getElementById('modalReserva').addEventListener('click', (e) => {
       if (e.target.id === 'modalReserva') {
         this.cerrarModal();
@@ -57,198 +57,242 @@ class ReservasPublicas {
     });
   }
 
-  cambiarSemana(direccion) {
-    const nuevaFecha = this.fechaInicio.add(direccion, 'week');
-    const hoy = dayjs().startOf('day');
-    const maniana = hoy.add(1, 'day');
-    const primerLunesValido = this.calcularPrimerLunesValido(maniana);
+  isWeekday(date) {
+    const day = date.day();
+    return day >= 1 && day <= 5; // Lunes a Viernes
+  }
+
+  changeMonth(direction) {
+    const newMonth = this.currentMonth.add(direction, 'month');
+    const today = dayjs().startOf('month');
     
-    // No permitir retroceder antes del primer lunes válido
-    if (direccion < 0 && nuevaFecha.isBefore(primerLunesValido, 'day')) {
-      return; // Bloquear navegación hacia atrás
+    // No retroceder antes del mes actual
+    if (direction < 0 && newMonth.isBefore(today, 'month')) {
+      return;
     }
     
-    this.fechaInicio = nuevaFecha;
-    this.actualizarRangoSemana();
-    this.actualizarBotones();
-    this.cargarSlotsDisponibles();
+    this.currentMonth = newMonth;
+    this.renderCalendar();
+    this.updateMonthNavButtons();
   }
 
-  actualizarRangoSemana() {
-    const fechaFin = this.fechaInicio.add(6, 'day');
-    const rangoTexto = `${this.fechaInicio.format('D MMM')} - ${fechaFin.format('D MMM YYYY')}`;
-    document.getElementById('rangoSemana').textContent = rangoTexto;
-    this.actualizarBotones();
-  }
-
-  actualizarBotones() {
-    const hoy = dayjs().startOf('day');
-    const maniana = hoy.add(1, 'day');
-    const btnAnterior = document.getElementById('btnSemanaAnterior');
+  updateMonthNavButtons() {
+    const btnAnterior = document.getElementById('btnMesAnterior');
+    const today = dayjs().startOf('month');
     
-    // Calcular la primera semana válida (que contiene mañana o es posterior)
-    const primerLunesValido = this.calcularPrimerLunesValido(maniana);
-    
-    // Deshabilitar botón anterior si estamos en la primera semana válida
-    if (this.fechaInicio.isSame(primerLunesValido, 'day') || this.fechaInicio.isBefore(primerLunesValido, 'day')) {
+    if (this.currentMonth.isSame(today, 'month')) {
       btnAnterior.disabled = true;
-      btnAnterior.style.opacity = '0.4';
-      btnAnterior.style.cursor = 'not-allowed';
     } else {
       btnAnterior.disabled = false;
-      btnAnterior.style.opacity = '1';
-      btnAnterior.style.cursor = 'pointer';
     }
   }
-  
-  calcularPrimerLunesValido(maniana) {
-    const diaSemana = maniana.day();
+
+  async renderCalendar() {
+    // Actualizar título del mes
+    document.getElementById('mesActual').textContent = this.currentMonth.format('MMMM YYYY');
     
-    if (diaSemana === 0) {
-      return maniana.add(1, 'day');
-    } else if (diaSemana === 6) {
-      return maniana.add(2, 'day');
-    } else if (diaSemana === 1) {
-      return maniana;
-    } else {
-      // Retroceder al lunes de la misma semana de mañana
-      return maniana.subtract(diaSemana - 1, 'day');
+    // Cargar slots del mes (si no están en cache)
+    await this.loadMonthSlots();
+    
+    // Generar días del calendario
+    const container = document.getElementById('calendarDays');
+    container.innerHTML = '';
+    
+    // Primer día del mes y último
+    const firstDay = this.currentMonth.startOf('month');
+    const lastDay = this.currentMonth.endOf('month');
+    
+    // Calcular días a mostrar antes del 1 (del mes anterior)
+    const startWeekday = firstDay.day(); // 0=domingo, 1=lunes, etc
+    const daysBeforeStart = startWeekday === 0 ? 6 : startWeekday - 1; // Ajustar para que lunes sea el primero
+    
+    // Calcular días del mes anterior a mostrar
+    const prevMonthStart = firstDay.subtract(daysBeforeStart, 'day');
+    
+    // Generar 42 días (6 semanas completas para consistencia visual)
+    const today = dayjs().startOf('day');
+    const tomorrow = today.add(1, 'day');
+    
+    for (let i = 0; i < 42; i++) {
+      const date = prevMonthStart.add(i, 'day');
+      const dayElement = document.createElement('div');
+      dayElement.className = 'calendar-day';
+      dayElement.textContent = date.format('D');
+      
+      // Estilos condicionales
+      const isCurrentMonth = date.month() === this.currentMonth.month();
+      const isToday = date.isSame(today, 'day');
+      const isSelected = this.selectedDate && date.isSame(this.selectedDate, 'day');
+      const isPast = date.isBefore(tomorrow, 'day');
+      const isWeekend = !this.isWeekday(date);
+      const hasSlots = this.hasAvailableSlots(date);
+      
+      if (!isCurrentMonth) {
+        dayElement.classList.add('other-month');
+      }
+      
+      if (isToday) {
+        dayElement.classList.add('today');
+      }
+      
+      if (isSelected) {
+        dayElement.classList.add('selected');
+      }
+      
+      if (isPast || isWeekend || !isCurrentMonth) {
+        dayElement.classList.add('disabled');
+      }
+      
+      if (hasSlots && isCurrentMonth && !isPast && !isWeekend) {
+        dayElement.classList.add('has-slots');
+      }
+      
+      // Click handler
+      if (!isPast && !isWeekend && isCurrentMonth) {
+        dayElement.style.cursor = 'pointer';
+        dayElement.addEventListener('click', () => {
+          this.selectDate(date);
+        });
+      }
+      
+      container.appendChild(dayElement);
     }
+    
+    this.updateMonthNavButtons();
   }
 
-  async cargarSlotsDisponibles() {
-    const container = document.getElementById('slotsContainer');
-    container.innerHTML = '<div class="loading"><span class="material-icons spinning">refresh</span><p>Cargando horarios disponibles...</p></div>';
+  hasAvailableSlots(date) {
+    const dateStr = date.format('YYYY-MM-DD');
+    const monthKey = this.currentMonth.format('YYYY-MM');
+    const monthSlots = this.slotsCache[monthKey] || [];
+    
+    return monthSlots.some(slot => slot.fecha === dateStr);
+  }
 
+  async loadMonthSlots() {
+    const monthKey = this.currentMonth.format('YYYY-MM');
+    
+    // Si ya están en cache, no recargar
+    if (this.slotsCache[monthKey]) {
+      return;
+    }
+    
     try {
-      const startDate = this.fechaInicio.format('YYYY-MM-DD');
-      const endDate = this.fechaInicio.add(6, 'day').format('YYYY-MM-DD');
+      const startDate = this.currentMonth.startOf('month').format('YYYY-MM-DD');
+      const endDate = this.currentMonth.endOf('month').format('YYYY-MM-DD');
       
-      // Construir parámetros igual que en SlotsView.js
       const horarios = CONFIG.HORARIOS.map(h => h.join('-')).join(',');
       const url = `/api/proxy/disponibles?startDate=${startDate}&endDate=${endDate}&duracion=${CONFIG.DURACION_CITA}&horarios=${horarios}&timezone=${CONFIG.TIMEZONE}`;
       
-      const response = await fetch(url, { 
+      const response = await fetch(url, {
         headers: { 'Content-Type': 'application/json' }
       });
       
       if (!response.ok) {
-        const errorText = await response.text();
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
       
       const data = await response.json();
+      const slots = data.disponibles || data.slots_disponibles || [];
       
-      // Filtrar slots de días pasados (incluido hoy)
-      const hoy = dayjs().startOf('day').format('YYYY-MM-DD');
-      const todosLosSlots = data.disponibles || data.slots_disponibles || [];
-      const slotsFuturos = todosLosSlots.filter(slot => {
-        return slot.fecha > hoy; // Solo mostrar slots de mañana en adelante
-      });
+      // Filtrar solo slots futuros
+      const tomorrow = dayjs().add(1, 'day').startOf('day').format('YYYY-MM-DD');
+      this.slotsCache[monthKey] = slots.filter(slot => slot.fecha >= tomorrow);
       
-      this.mostrarSlots(slotsFuturos);
     } catch (error) {
-      console.error('Error al cargar slots:', error);
-      container.innerHTML = '<div class="error"><span class="material-icons">error</span><p>Error al cargar los horarios disponibles</p></div>';
+      console.error('Error al cargar slots del mes:', error);
+      this.slotsCache[monthKey] = [];
     }
   }
 
-  mostrarSlots(slots) {
+  selectDate(date) {
+    this.selectedDate = date;
+    
+    // Actualizar visual del calendario
+    document.querySelectorAll('.calendar-day').forEach(day => {
+      day.classList.remove('selected');
+    });
+    
+    // Actualizar título de slots
+    document.getElementById('diaSeleccionado').textContent = date.format('ddd D');
+    
+    // Renderizar calendario completo para reflejar selección
+    this.renderCalendar();
+    
+    // Cargar slots del día
+    this.renderSlots();
+  }
+
+  renderSlots() {
     const container = document.getElementById('slotsContainer');
     
-    if (!slots || slots.length === 0) {
-      container.innerHTML = '<div class="no-slots"><span class="material-icons">event_busy</span><p>No hay horarios disponibles para esta semana</p></div>';
+    if (!this.selectedDate) {
+      container.innerHTML = '<div class="no-slots"><span class="material-icons">event</span><p>Selecciona un día en el calendario</p></div>';
       return;
     }
     
-    // Agrupar slots por fecha
-    const slotsPorFecha = {};
-    slots.forEach(slot => {
-      const fecha = slot.fecha;
-      if (!slotsPorFecha[fecha]) {
-        slotsPorFecha[fecha] = [];
-      }
-      slotsPorFecha[fecha].push(slot);
-    });
-
-    // Generar días de la semana (Lunes a Viernes)
-    const diasSemana = [];
-    for (let i = 0; i < 7; i++) {
-      const dia = this.fechaInicio.add(i, 'day');
-      // Solo días laborables (Lunes=1 a Viernes=5)
-      if (dia.day() >= 1 && dia.day() <= 5) {
-        diasSemana.push(dia);
-      }
-    }
-
-    if (diasSemana.length === 0) {
-      container.innerHTML = `
-        <div class="sin-slots">
-          <span class="material-icons">event_busy</span>
-          <p>No hay horarios disponibles en esta semana</p>
-        </div>
-      `;
+    const dateStr = this.selectedDate.format('YYYY-MM-DD');
+    const monthKey = this.currentMonth.format('YYYY-MM');
+    const monthSlots = this.slotsCache[monthKey] || [];
+    const daySlots = monthSlots.filter(slot => slot.fecha === dateStr);
+    
+    if (daySlots.length === 0) {
+      container.innerHTML = '<div class="no-slots"><span class="material-icons">event_busy</span><p>No hay horarios disponibles</p></div>';
       return;
     }
-
+    
+    // Ordenar por hora
+    daySlots.sort((a, b) => a.hora_inicio.localeCompare(b.hora_inicio));
+    
     container.innerHTML = '';
-
-    diasSemana.forEach(dia => {
-      const fecha = dia.format('YYYY-MM-DD');
-      const slotsDelDia = slotsPorFecha[fecha] || [];
-
-      const diaDiv = document.createElement('div');
-      diaDiv.className = 'dia-publico';
-
-      // Header del día
-      const header = document.createElement('div');
-      header.className = 'dia-header-publico';
-      header.textContent = dia.format('ddd D').toUpperCase();
-      diaDiv.appendChild(header);
-
-      // Lista de slots
-      const slotsList = document.createElement('div');
-      slotsList.className = 'slots-list-publico';
-
-      if (slotsDelDia.length === 0) {
-        slotsList.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:1rem;">Sin disponibilidad</p>';
+    
+    daySlots.forEach(slot => {
+      const horaLocal = dayjs.utc(slot.startTime).tz(CONFIG.TIMEZONE);
+      let timeText;
+      
+      if (this.timeFormat === '12') {
+        timeText = horaLocal.format('h:mm A');
       } else {
-        // Ordenar por hora de inicio
-        slotsDelDia.sort((a, b) => a.hora_inicio.localeCompare(b.hora_inicio));
-        
-        slotsDelDia.forEach(slot => {
-          // Convertir de UTC a hora local
-          const horaLocal = dayjs.utc(slot.startTime).tz(CONFIG.TIMEZONE).format('HH:mm');
-          
-          const btn = document.createElement('button');
-          btn.className = 'slot-btn-publico';
-          btn.textContent = horaLocal;
-          btn.onclick = () => this.seleccionarSlot(slot, dia);
-          slotsList.appendChild(btn);
-        });
+        timeText = horaLocal.format('HH:mm');
       }
-
-      diaDiv.appendChild(slotsList);
-      container.appendChild(diaDiv);
+      
+      const btn = document.createElement('button');
+      btn.className = 'slot-btn';
+      btn.textContent = timeText;
+      
+      btn.addEventListener('click', () => {
+        this.seleccionarSlot(slot);
+      });
+      
+      container.appendChild(btn);
     });
   }
 
-  seleccionarSlot(slot, dia) {
+  seleccionarSlot(slot) {
     this.slotSeleccionado = slot;
-    this.mostrarFormularioReserva(dia);
+    this.mostrarFormularioReserva();
   }
 
-  mostrarFormularioReserva(dia) {
+  mostrarFormularioReserva() {
     const startLocal = dayjs.utc(this.slotSeleccionado.startTime).tz(CONFIG.TIMEZONE);
+    const endLocal = startLocal.add(CONFIG.DURACION_CITA, 'minute');
     
     const formulario = `
-      <p style="background:#e3f2fd;padding:0.75rem;border-radius:6px;margin-bottom:1.5rem;text-align:center;font-weight:500;font-size:0.9rem;line-height:1.8;">
-        <span class="material-icons" style="vertical-align:middle;margin-right:4px;font-size:18px;">event</span>
-        ${dia.format('dddd, D [de] MMMM YYYY')}
-        <span style="margin:0 8px;">•</span>
-        <span class="material-icons" style="vertical-align:middle;margin-right:4px;font-size:18px;">schedule</span>
-        ${startLocal.format('HH:mm')}
-      </p>
+      <div class="booking-summary">
+        <h4>Detalles de la reserva</h4>
+        <p>
+          <span class="material-icons">event</span>
+          ${this.selectedDate.format('dddd, D [de] MMMM YYYY')}
+        </p>
+        <p>
+          <span class="material-icons">schedule</span>
+          ${startLocal.format('HH:mm')} - ${endLocal.format('HH:mm')} (${CONFIG.DURACION_CITA} min)
+        </p>
+        <p>
+          <span class="material-icons">place</span>
+          P.ind La Mezquita 1, Vera
+        </p>
+      </div>
 
       <div id="mensajes"></div>
 
@@ -260,17 +304,15 @@ class ReservasPublicas {
 
         <div class="form-group">
           <label>Teléfono *</label>
-          <div class="phone-group">
-            <select id="prefijo">
+          <div style="display:flex;gap:8px;">
+            <select id="prefijo" style="width:120px;">
               <option value="+34" selected>ES +34</option>
               <option value="+33">FR +33</option>
               <option value="+351">PT +351</option>
               <option value="+44">UK +44</option>
               <option value="+1">US +1</option>
-              <option value="+52">MX +52</option>
-              <option value="+54">AR +54</option>
             </select>
-            <input type="tel" id="telefono" required placeholder="600 123 456">
+            <input type="tel" id="telefono" required placeholder="600 123 456" style="flex:1;">
           </div>
         </div>
 
@@ -281,15 +323,15 @@ class ReservasPublicas {
 
         <div class="form-group">
           <label>Servicio *</label>
-          <div class="checkbox-group">
-            <div class="checkbox-item">
+          <div style="display:flex;flex-direction:column;gap:12px;margin-top:8px;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
               <input type="checkbox" id="servicio-neumaticos" value="Neumáticos">
-              <label for="servicio-neumaticos">Neumáticos</label>
-            </div>
-            <div class="checkbox-item">
+              <span>Neumáticos</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
               <input type="checkbox" id="servicio-alineacion" value="Alineación">
-              <label for="servicio-alineacion">Alineación</label>
-            </div>
+              <span>Alineación</span>
+            </label>
           </div>
         </div>
 
@@ -305,12 +347,18 @@ class ReservasPublicas {
 
         <div class="form-group">
           <label for="notes">Notas adicionales</label>
-          <textarea id="notes" rows="3" placeholder="Información adicional..."></textarea>
+          <textarea id="notes" placeholder="Información adicional..."></textarea>
         </div>
 
-        <button type="submit" id="btnSubmit" class="btn-primary">
-          Confirmar Reserva
-        </button>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="cerrarModal()">
+            Cancelar
+          </button>
+          <button type="submit" id="btnSubmit" class="btn btn-primary">
+            <span class="material-icons">check</span>
+            Confirmar Reserva
+          </button>
+        </div>
       </form>
     `;
 
@@ -329,8 +377,9 @@ class ReservasPublicas {
     const btnSubmit = document.getElementById('btnSubmit');
     const mensajes = document.getElementById('mensajes');
     
+    const originalHTML = btnSubmit.innerHTML;
     btnSubmit.disabled = true;
-    btnSubmit.textContent = 'Enviando...';
+    btnSubmit.innerHTML = '<span class="material-icons spinning">refresh</span> Enviando...';
     mensajes.innerHTML = '';
 
     try {
@@ -374,9 +423,14 @@ class ReservasPublicas {
       });
 
       if (response.ok) {
-        mensajes.innerHTML = '<div class="mensaje mensaje-exito"><span class="material-icons" style="vertical-align:middle;margin-right:8px;">check_circle</span>¡Reserva confirmada! Te enviaremos un recordatorio por SMS.</div>';
+        mensajes.innerHTML = `
+          <div style="background:#d4edda;border:1px solid #c3e6cb;color:#155724;padding:16px;border-radius:8px;margin-bottom:16px;display:flex;align-items:center;gap:12px;">
+            <span class="material-icons">check_circle</span>
+            <span>¡Reserva confirmada! Te enviaremos un recordatorio por SMS.</span>
+          </div>
+        `;
         
-        // Notificar al webhook que hubo un cambio
+        // Notificar webhook
         try {
           await fetch(CONFIG.WEBHOOK_URL, {
             method: 'POST',
@@ -390,9 +444,16 @@ class ReservasPublicas {
           console.error('Error notificando cambio:', error);
         }
         
+        // Limpiar cache y recargar
+        const monthKey = this.currentMonth.format('YYYY-MM');
+        delete this.slotsCache[monthKey];
+        
         setTimeout(() => {
           this.cerrarModal();
-          this.cargarSlotsDisponibles();
+          this.loadMonthSlots().then(() => {
+            this.renderCalendar();
+            this.renderSlots();
+          });
         }, 2500);
       } else {
         const errorData = await response.text();
@@ -400,9 +461,14 @@ class ReservasPublicas {
       }
     } catch (error) {
       console.error('Error:', error);
-      mensajes.innerHTML = `<div class="mensaje mensaje-error">${error.message}</div>`;
+      mensajes.innerHTML = `
+        <div style="background:#f8d7da;border:1px solid #f5c6cb;color:#721c24;padding:16px;border-radius:8px;margin-bottom:16px;display:flex;align-items:center;gap:12px;">
+          <span class="material-icons">error</span>
+          <span>${error.message}</span>
+        </div>
+      `;
       btnSubmit.disabled = false;
-      btnSubmit.textContent = 'Confirmar Reserva';
+      btnSubmit.innerHTML = originalHTML;
     }
   }
 }

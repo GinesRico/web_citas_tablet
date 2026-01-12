@@ -16,7 +16,7 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
   <!-- Material Icons -->
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -39,49 +39,93 @@
   </script>
 </head>
 <body>
-  <!-- Header -->
-  <header class="header-publico">
-    <div class="header-content">
-      <div class="logo-title">
-        <img src="icons/logotipo_ARVERA_W.png" alt="Arvera Neumáticos" class="logo-empresa">
+  <!-- Contenedor principal estilo Cal.com -->
+  <div class="calcom-container">
+    
+    <!-- Sidebar con info del negocio -->
+    <aside class="business-sidebar">
+      <div class="business-info">
+        <img src="icons/logotipo_ARVERA_W.png" alt="Arvera Neumáticos" class="business-logo">
+        <h2 class="business-name">Auto Recambios Vera</h2>
+        <h1 class="service-title">Servicio de Neumáticos</h1>
+        
+        <div class="business-details">
+          <div class="detail-item">
+            <span class="material-icons">schedule</span>
+            <span id="duracionCita">45m</span>
+          </div>
+          <div class="detail-item">
+            <span class="material-icons">place</span>
+            <span>P.ind La Mezquita 1, Vera</span>
+          </div>
+          <div class="detail-item">
+            <span class="material-icons">public</span>
+            <span id="timezone">Europe/Madrid</span>
+          </div>
+        </div>
       </div>
-      <p class="subtitle">Reserva tu cita online</p>
-    </div>
-  </header>
+    </aside>
 
-  <!-- Contenedor principal -->
-  <main class="main-publico">
-    <!-- Selector de semana -->
-    <div class="semana-selector">
-      <button id="btnSemanaAnterior" class="btn-navegacion">
-        <span class="material-icons">chevron_left</span>
-      </button>
-      <span id="rangoSemana" class="rango-semana"></span>
-      <button id="btnSemanaSiguiente" class="btn-navegacion">
-        <span class="material-icons">chevron_right</span>
-      </button>
-    </div>
+    <!-- Área principal con calendario y slots -->
+    <main class="booking-main">
+      
+      <!-- Calendario mensual -->
+      <section class="calendar-section">
+        <div class="calendar-header">
+          <h3 id="mesActual">enero 2026</h3>
+          <div class="calendar-nav">
+            <button id="btnMesAnterior" class="nav-btn">
+              <span class="material-icons">chevron_left</span>
+            </button>
+            <button id="btnMesSiguiente" class="nav-btn">
+              <span class="material-icons">chevron_right</span>
+            </button>
+          </div>
+        </div>
 
-    <!-- Mensaje de bienvenida -->
-    <div class="info-mensaje">
-      <span class="material-icons">info</span>
-      <p>Selecciona un horario disponible para agendar tu cita</p>
-    </div>
+        <div class="calendar-grid">
+          <div class="calendar-weekdays">
+            <div class="weekday">LUN</div>
+            <div class="weekday">MAR</div>
+            <div class="weekday">MIÉ</div>
+            <div class="weekday">JUE</div>
+            <div class="weekday">VIE</div>
+            <div class="weekday">SÁB</div>
+            <div class="weekday">DOM</div>
+          </div>
+          <div id="calendarDays" class="calendar-days">
+            <!-- Días generados por JS -->
+          </div>
+        </div>
+      </section>
 
-    <!-- Contenedor de slots disponibles -->
-    <div id="slotsContainer" class="slots-container-publico">
-      <div class="loading">
-        <span class="material-icons spinning">refresh</span>
-        <p>Cargando horarios disponibles...</p>
-      </div>
-    </div>
-  </main>
+      <!-- Slots disponibles -->
+      <section class="slots-section">
+        <div class="slots-header">
+          <h3 id="diaSeleccionado">mar 13</h3>
+          <div class="time-format-toggle">
+            <button class="format-btn active" data-format="12">12 h</button>
+            <button class="format-btn" data-format="24">24hs</button>
+          </div>
+        </div>
+
+        <div id="slotsContainer" class="slots-list">
+          <div class="loading">
+            <span class="material-icons spinning">refresh</span>
+            <p>Cargando horarios...</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
 
   <!-- Modal para formulario de reserva -->
   <div id="modalReserva" class="modal-overlay">
     <div class="modal-content">
       <div class="modal-header">
-        <h2>Agendar Cita</h2>
+        <h3>Confirmar reserva</h3>
         <button class="btn-close" onclick="cerrarModal()">
           <span class="material-icons">close</span>
         </button>
@@ -99,11 +143,10 @@
         window.reservas = new ReservasPublicas();
       }).catch(err => {
         console.error('Error cargando configuración:', err);
-        // Inicializar de todos modos con valores por defecto
         window.reservas = new ReservasPublicas();
       });
     } else {
-      console.error('configPromise no está definido. Asegúrate de que js/config.js esté cargado.');
+      console.error('configPromise no está definido.');
     }
   </script>
 </body>
