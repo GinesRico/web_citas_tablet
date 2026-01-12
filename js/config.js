@@ -7,8 +7,8 @@
 // Configuración inicial (se sobrescribirá con valores del servidor)
 let CONFIG = {
   // Valores por defecto temporales (solo para desarrollo local sin servidor)
+  // NOTA: API_KEY ya NO se expone al cliente - se maneja en /api/proxy
   API_BASE_URL: 'https://api-citas-seven.vercel.app/api',
-  API_KEY: '',
   WEBHOOK_URL: 'https://webhook.arvera.es/webhook/cal-event',
   CHECK_UPDATE_URL: 'https://webhook.arvera.es/webhook/check-update',
   SUPABASE_URL: 'https://pvvxwibhqowjcdxazalx.supabase.co',
@@ -39,7 +39,6 @@ async function loadEnvFromServer() {
       
       // Sobrescribir CONFIG con TODOS los valores del servidor
       CONFIG.API_BASE_URL = envVars.API_BASE_URL || CONFIG.API_BASE_URL;
-      CONFIG.API_KEY = envVars.API_KEY || CONFIG.API_KEY;
       CONFIG.WEBHOOK_URL = envVars.WEBHOOK_URL || CONFIG.WEBHOOK_URL;
       CONFIG.CHECK_UPDATE_URL = envVars.CHECK_UPDATE_URL || CONFIG.CHECK_UPDATE_URL;
       CONFIG.SUPABASE_URL = envVars.SUPABASE_URL || CONFIG.SUPABASE_URL;

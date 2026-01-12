@@ -50,14 +50,11 @@ class SlotsView {
     
     // Construir parámetros usando CONFIG global
     const horarios = CONFIG.HORARIOS.map(h => h.join('-')).join(',');
-    const url = `${CONFIG.API_BASE_URL}/disponibles?startDate=${startDate}&endDate=${endDate}&duracion=${CONFIG.DURACION_CITA}&horarios=${horarios}&timezone=${CONFIG.TIMEZONE}`;
+    const url = `/api/proxy/disponibles?startDate=${startDate}&endDate=${endDate}&duracion=${CONFIG.DURACION_CITA}&horarios=${horarios}&timezone=${CONFIG.TIMEZONE}`;
     
-    const headers = { 'Content-Type': 'application/json' };
-    if (CONFIG.API_KEY) {
-      headers['X-API-Key'] = CONFIG.API_KEY;
-    }
-    
-    const response = await fetch(url, { headers });
+    const response = await fetch(url, { 
+      headers: { 'Content-Type': 'application/json' }
+    });
     
     if (!response.ok) {
       const errorText = await response.text();

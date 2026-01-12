@@ -105,11 +105,9 @@ class ApiService {
         ...options.headers
       };
 
-      // Agregar API Key si está configurada
-      if (CONFIG.API_KEY) {
-        headers['X-API-Key'] = CONFIG.API_KEY;
-      }
-
+      // Ya no necesitamos API_KEY en el cliente - se maneja en el proxy
+      // El proxy /api/proxy añade el API_KEY en el servidor
+      
       const response = await fetch(url, {
         ...options,
         headers
@@ -122,7 +120,8 @@ class ApiService {
   }
 
   async getCitas(startDate = null, endDate = null) {
-    let url = `${CONFIG.API_BASE_URL}/citas`;
+    // Usar proxy en lugar de llamada directa a la API
+    let url = `/api/proxy/citas`;
     if (startDate && endDate) {
       url += `?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
     }
@@ -148,7 +147,7 @@ class ApiService {
   }
 
   async agendarCita(datos) {
-    const res = await this.fetch(`${CONFIG.API_BASE_URL}/citas`, {
+    const res = await this.fetch(`/api/proxy/citas`, {
       method: 'POST',
       body: JSON.stringify({
         Nombre: datos.name,
@@ -166,7 +165,7 @@ class ApiService {
   }
 
   async actualizarCita(citaId, datos) {
-    const res = await this.fetch(`${CONFIG.API_BASE_URL}/citas/${citaId}`, {
+    const res = await this.fetch(`/api/proxy/citas/${citaId}`, {
       method: 'PUT',
       body: JSON.stringify(datos)
     });
@@ -174,7 +173,7 @@ class ApiService {
   }
 
   async eliminarCita(citaId) {
-    const res = await this.fetch(`${CONFIG.API_BASE_URL}/citas/${citaId}`, {
+    const res = await this.fetch(`/api/proxy/citas/${citaId}`, {
       method: 'DELETE'
     });
     return res;
