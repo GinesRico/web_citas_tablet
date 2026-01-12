@@ -938,18 +938,19 @@ body.device-mobile .sidebar {
   .header-left {
     order: 1;
     gap: 4px;
+    width: 100%;
   }
 
   .title {
     font-size: 14px;
-    max-width: 120px;
+    flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   .view-tabs {
     order: 2;
-    width: 100%;
+    flex: 1;
     justify-content: flex-start;
     gap: 4px;
   }
@@ -964,7 +965,7 @@ body.device-mobile .sidebar {
   }
 
   .header-actions {
-    order: 3;
+    order: 2;
     gap: 4px;
     margin-left: auto;
   }
