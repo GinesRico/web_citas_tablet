@@ -25,35 +25,45 @@ class ReservasPublicas {
    * Busca y selecciona el primer día con slots disponibles
    */
   async seleccionarPrimerDiaDisponible() {
-    // Asegurarse de que los slots del mes actual estén cargados
-    await this.loadMonthSlots();
+    const maxIntentos = 6; // Buscar hasta 6 meses adelante
+    let intentos = 0;
+    let mesActual = this.currentMonth.clone();
     
-    const monthKey = this.currentMonth.format('YYYY-MM');
-    const monthSlots = this.slotsCache[monthKey] || [];
-    
-    // Obtener el primer slot disponible desde mañana en adelante
-    const tomorrow = dayjs().add(1, 'day').startOf('day');
-    const slotsDisponibles = monthSlots
-      .filter(slot => dayjs(slot.fecha).isSameOrAfter(tomorrow, 'day'))
-      .sort((a, b) => a.fecha.localeCompare(b.fecha));
-    
-    if (slotsDisponibles.length > 0) {
-      // Seleccionar el primer día con slots
-      const primerDiaConSlots = dayjs(slotsDisponibles[0].fecha);
+    while (intentos < maxIntentos) {
+      // Asegurarse de que los slots del mes están cargados
+      this.currentMonth = mesActual;
+      await this.loadMonthSlots();
       
-      // Si el primer día disponible está en otro mes, cambiar al mes correcto
-      if (primerDiaConSlots.month() !== this.currentMonth.month()) {
-        this.currentMonth = primerDiaConSlots.startOf('month');
-        await this.renderCalendar();
+      const monthKey = mesActual.format('YYYY-MM');
+      const monthSlots = this.slotsCache[monthKey] || [];
+      
+      // Obtener el primer slot disponible desde mañana en adelante
+      const tomorrow = dayjs().add(1, 'day').startOf('day').format('YYYY-MM-DD');
+      const slotsDisponibles = monthSlots
+        .filter(slot => slot.fecha >= tomorrow)
+        .sort((a, b) => a.fecha.localeCompare(b.fecha));
+      
+      if (slotsDisponibles.length > 0) {
+        // Encontramos slots disponibles
+        const primerDiaConSlots = dayjs(slotsDisponibles[0].fecha);
+        
+        // Si el primer día disponible está en otro mes, actualizar el calendario
+        if (primerDiaConSlots.month() !== this.currentMonth.month()) {
+          this.currentMonth = primerDiaConSlots.startOf('month');
+          await this.renderCalendar();
+        }
+        
+        this.selectDate(primerDiaConSlots);
+        return; // Salir del bucle
       }
       
-      this.selectDate(primerDiaConSlots);
-    } else {
-      // No hay slots en este mes, intentar con el siguiente
-      this.currentMonth = this.currentMonth.add(1, 'month');
-      await this.renderCalendar();
-      await this.seleccionarPrimerDiaDisponible();
+      // No hay slots en este mes, pasar al siguiente
+      mesActual = mesActual.add(1, 'month');
+      intentos++;
     }
+    
+    // Si llegamos aquí, no hay slots en los próximos 6 meses
+    console.warn('No se encontraron slots disponibles en los próximos 6 meses');
   }
 
   setupEventListeners() {
@@ -212,12 +222,9 @@ class ReservasPublicas {
       const data = await response.json();
       const slots = data.disponibles || data.slots_disponibles || [];
       
-      // Filtrar solo slots desde mañana en adelante (no incluir hoy)
-      const tomorrow = dayjs().add(1, 'day').startOf('day');
-      this.slotsCache[monthKey] = slots.filter(slot => {
-        const slotDate = dayjs(slot.fecha);
-        return slotDate.isSameOrAfter(tomorrow, 'day');
-      });
+      // Filtrar solo slots desde mañana en adelante usando comparación de strings
+      const tomorrow = dayjs().add(1, 'day').startOf('day').format('YYYY-MM-DD');
+      this.slotsCache[monthKey] = slots.filter(slot => slot.fecha >= tomorrow);
       
     } catch (error) {
       console.error('Error al cargar slots del mes:', error);
