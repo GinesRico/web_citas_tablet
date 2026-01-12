@@ -17,7 +17,22 @@ class ReservasPublicas {
     this.setupEventListeners();
     await this.renderCalendar();
     
-    // Buscar el primer día con slots disponibles
+    // Verificar si hay fecha en URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const fechaURL = urlParams.get('fecha');
+    
+    if (fechaURL) {
+      // Si hay fecha en URL, seleccionarla directamente
+      const fechaSeleccionada = dayjs(fechaURL);
+      if (fechaSeleccionada.isValid()) {
+        this.currentMonth = fechaSeleccionada.startOf('month');
+        await this.renderCalendar();
+        await this.selectDate(fechaSeleccionada);
+        return;
+      }
+    }
+    
+    // Si no hay fecha en URL, buscar el primer día con slots disponibles
     await this.seleccionarPrimerDiaDisponible();
   }
 

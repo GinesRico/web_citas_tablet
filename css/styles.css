@@ -26,6 +26,15 @@
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
   --shadow-md: 0 2px 4px rgba(0,0,0,0.1);
   --shadow-lg: 0 4px 8px rgba(0,0,0,0.15);
+  /* Variables adicionales para coherencia con cliente */
+  --bg-white: #ffffff;
+  --bg-gray-50: #f9fafb;
+  --bg-gray-100: #f3f4f6;
+  --accent-blue: #054496;
+  --accent-blue-light: #e3f2fd;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
 }
 
 /* ==========================================
@@ -735,8 +744,9 @@ body.device-mobile .sidebar {
 
 .mini-calendar-header h3 {
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary);
+  text-transform: capitalize;
 }
 
 .mini-calendar-nav {
@@ -745,22 +755,22 @@ body.device-mobile .sidebar {
 }
 
 .mini-calendar-nav button {
-  width: 28px;
-  height: 28px;
-  border: none;
-  background: transparent;
-  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-white);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   transition: all 0.2s;
 }
 
 .mini-calendar-nav button:hover {
-  background: #e8f0fe;
-  color: var(--primary-color);
+  background: var(--bg-gray-50);
+  border-color: var(--text-secondary);
 }
 
 .mini-calendar-grid {
@@ -783,15 +793,19 @@ body.device-mobile .sidebar {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all 0.2s;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--bg-white);
+  color: var(--text-primary);
 }
 
-.mini-calendar-day:hover {
-  background: #e8f0fe;
-  color: var(--primary-color);
+.mini-calendar-day:hover:not(.other-month):not(.weekend) {
+  background: var(--bg-gray-50);
+  border-color: var(--text-secondary);
 }
 
 .mini-calendar-day.other-month {
@@ -800,15 +814,16 @@ body.device-mobile .sidebar {
 }
 
 .mini-calendar-day.today {
-  background: var(--primary-color);
-  color: white;
-  font-weight: 500;
+  background: var(--accent-blue-light);
+  color: var(--accent-blue);
+  border-color: var(--accent-blue);
+  font-weight: 600;
 }
 
 .mini-calendar-day.selected {
-  background: var(--success-color);
+  background: var(--accent-blue);
   color: white;
-  font-weight: 500;
+  border-color: var(--accent-blue);
 }
 
 .mini-calendar-day.has-citas {
@@ -818,11 +833,17 @@ body.device-mobile .sidebar {
 .mini-calendar-day.has-citas::after {
   content: '';
   position: absolute;
-  bottom: 2px;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
   width: 4px;
   height: 4px;
-  background: var(--warning-color);
+  background: var(--accent-blue);
   border-radius: 50%;
+}
+
+.mini-calendar-day.selected.has-citas::after {
+  background: white;
 }
 
 .mini-calendar-day.weekend {
@@ -834,14 +855,16 @@ body.device-mobile .sidebar {
    ========================================== */
 
 .stats {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e8eaf0 100%);
-  border-radius: 8px;
+  background: var(--bg-white);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
   padding: 16px;
+  box-shadow: var(--shadow-sm);
 }
 
 .stats h3 {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 12px;
 }
@@ -1181,26 +1204,34 @@ body.device-mobile .sidebar {
 .dia-slots-columna .dia-slots-header {
   padding: 12px 8px;
   text-align: center;
-  border-bottom: 2px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
   margin-bottom: 8px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 8px;
 }
 
 .dia-nombre-corto {
   font-size: 13px;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   letter-spacing: 0.5px;
 }
 
-/* Botón copiar horarios */
-.btn-copiar-horarios {
+/* Contenedor de botones de acción */
+.botones-accion-slots {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+/* Botones copiar y abrir URL */
+.btn-copiar-horarios,
+.btn-abrir-url {
   background: transparent;
   border: 1px solid var(--border-color);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   padding: 4px 6px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1210,7 +1241,8 @@ body.device-mobile .sidebar {
   line-height: 1;
 }
 
-.btn-copiar-horarios .material-icons {
+.btn-copiar-horarios .material-icons,
+.btn-abrir-url .material-icons {
   font-size: 18px;
   color: var(--text-secondary);
 }
@@ -1218,10 +1250,20 @@ body.device-mobile .sidebar {
 .btn-copiar-horarios:hover {
   background: var(--primary-color);
   border-color: var(--primary-color);
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 .btn-copiar-horarios:hover .material-icons {
+  color: white;
+}
+
+.btn-abrir-url:hover {
+  background: var(--success-color);
+  border-color: var(--success-color);
+  transform: scale(1.05);
+}
+
+.btn-abrir-url:hover .material-icons {
   color: white;
 }
 
@@ -1244,15 +1286,15 @@ body.device-mobile .sidebar {
 
 .slot-btn-columna {
   width: 100%;
-  padding: 10px 12px;
+  padding: 12px 16px;
   background: white;
   color: var(--primary-color);
   border: 1.5px solid var(--primary-color);
-  border-radius: 6px;
-  font-size: 13px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
   font-family: 'Roboto Mono', monospace;
   text-align: center;
 }
@@ -1260,11 +1302,13 @@ body.device-mobile .sidebar {
 .slot-btn-columna:hover {
   background: var(--primary-color);
   color: white;
-  transform: scale(1.02);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .slot-btn-columna:active {
-  transform: scale(0.98);
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Mantener estilos legacy para compatibilidad */
