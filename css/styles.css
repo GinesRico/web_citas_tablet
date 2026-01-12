@@ -964,14 +964,18 @@ body.device-mobile .sidebar {
     display: none;
   }
 
+  .last-update {
+    order: 2;
+    display: block;
+    font-size: 11px;
+    white-space: nowrap;
+    margin: 0 8px;
+    flex-shrink: 0;
+  }
+
   .header-actions {
     order: 2;
     gap: 4px;
-    margin-left: auto;
-  }
-
-  .last-update {
-    display: none;
   }
 
   .btn-icon {
