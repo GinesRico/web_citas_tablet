@@ -35,34 +35,53 @@ class SlotsView {
   }
 
   /**
-   * Obtiene los slots disponibles del API
+   * Obtiene los slots disponibles del API, buscando el primer rango con disponibilidad
    */
   async obtenerSlotsDisponibles() {
-    // Obtener rango de fechas de la semana actual (7 días laborables)
-    const diasLaborables = this.app.diasLaborablesService.generarDiasLaborables(
-      this.app.currentWeek,
-      7
-    );
+    const maxIntentos = 4; // Buscar hasta 4 semanas adelante
+    let currentWeek = this.app.currentWeek;
     
-    // Usar formato simple YYYY-MM-DD (como en el ejemplo que funciona)
-    const startDate = diasLaborables[0].format('YYYY-MM-DD');
-    const endDate = diasLaborables[diasLaborables.length - 1].format('YYYY-MM-DD');
-    
-    // Construir parámetros usando CONFIG global
-    const horarios = CONFIG.HORARIOS.map(h => h.join('-')).join(',');
-    const url = `/api/proxy/disponibles?startDate=${startDate}&endDate=${endDate}&duracion=${CONFIG.DURACION_CITA}&horarios=${horarios}&timezone=${CONFIG.TIMEZONE}`;
-    
-    const response = await fetch(url, { 
-      headers: { 'Content-Type': 'application/json' }
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Error ${response.status}: ${response.statusText}`);
+    for (let intento = 0; intento < maxIntentos; intento++) {
+      // Obtener rango de fechas de la semana actual (7 días laborables)
+      const diasLaborables = this.app.diasLaborablesService.generarDiasLaborables(
+        currentWeek,
+        7
+      );
+      
+      // Usar formato simple YYYY-MM-DD
+      const startDate = diasLaborables[0].format('YYYY-MM-DD');
+      const endDate = diasLaborables[diasLaborables.length - 1].format('YYYY-MM-DD');
+      
+      // Construir parámetros usando CONFIG global
+      const horarios = CONFIG.HORARIOS.map(h => h.join('-')).join(',');
+      const url = `/api/proxy/disponibles?startDate=${startDate}&endDate=${endDate}&duracion=${CONFIG.DURACION_CITA}&horarios=${horarios}&timezone=${CONFIG.TIMEZONE}`;
+      
+      const response = await fetch(url, { 
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      // Si hay slots disponibles, retornar
+      if (data.disponibles && data.disponibles.length > 0) {
+        // Actualizar currentWeek de la app si encontramos disponibilidad en otra semana
+        if (intento > 0) {
+          this.app.currentWeek = currentWeek;
+        }
+        return data;
+      }
+      
+      // No hay slots, avanzar a la siguiente semana
+      currentWeek = currentWeek.add(7, 'day');
     }
     
-    const data = await response.json();
-    return data;
+    // No se encontraron slots en ninguna semana
+    return { disponibles: [], total_slots: 0 };
   }
 
   /**

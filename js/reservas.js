@@ -17,14 +17,40 @@ class ReservasPublicas {
     this.setupEventListeners();
     await this.renderCalendar();
     
-    // Seleccionar automáticamente mañana (si es laborable)
-    const tomorrow = dayjs().add(1, 'day');
-    if (this.isWeekday(tomorrow)) {
-      this.selectDate(tomorrow);
+    // Buscar el primer día con slots disponibles
+    await this.seleccionarPrimerDiaDisponible();
+  }
+
+  /**
+   * Busca y selecciona el primer día con slots disponibles
+   */
+  async seleccionarPrimerDiaDisponible() {
+    const monthKey = this.currentMonth.format('YYYY-MM');
+    const monthSlots = this.slotsCache[monthKey] || [];
+    
+    if (monthSlots.length === 0) {
+      // No hay slots en este mes, intentar con el siguiente
+      this.currentMonth = this.currentMonth.add(1, 'month');
+      await this.loadMonthSlots();
+      await this.seleccionarPrimerDiaDisponible();
+      return;
+    }
+    
+    // Obtener el primer slot disponible
+    const tomorrow = dayjs().add(1, 'day').startOf('day');
+    const slotsDisponibles = monthSlots
+      .filter(slot => dayjs(slot.fecha).isSameOrAfter(tomorrow, 'day'))
+      .sort((a, b) => a.fecha.localeCompare(b.fecha));
+    
+    if (slotsDisponibles.length > 0) {
+      // Seleccionar el primer día con slots
+      const primerDiaConSlots = dayjs(slotsDisponibles[0].fecha);
+      this.selectDate(primerDiaConSlots);
     } else {
-      // Si mañana es sábado/domingo, seleccionar el siguiente lunes
-      const nextMonday = tomorrow.day(1).add(tomorrow.day() === 0 ? 0 : 7, 'day');
-      this.selectDate(nextMonday);
+      // No hay slots futuros en este mes, cargar siguiente mes
+      this.currentMonth = this.currentMonth.add(1, 'month');
+      await this.renderCalendar();
+      await this.seleccionarPrimerDiaDisponible();
     }
   }
 
