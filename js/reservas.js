@@ -25,18 +25,13 @@ class ReservasPublicas {
    * Busca y selecciona el primer día con slots disponibles
    */
   async seleccionarPrimerDiaDisponible() {
+    // Asegurarse de que los slots del mes actual estén cargados
+    await this.loadMonthSlots();
+    
     const monthKey = this.currentMonth.format('YYYY-MM');
     const monthSlots = this.slotsCache[monthKey] || [];
     
-    if (monthSlots.length === 0) {
-      // No hay slots en este mes, intentar con el siguiente
-      this.currentMonth = this.currentMonth.add(1, 'month');
-      await this.loadMonthSlots();
-      await this.seleccionarPrimerDiaDisponible();
-      return;
-    }
-    
-    // Obtener el primer slot disponible
+    // Obtener el primer slot disponible desde mañana en adelante
     const tomorrow = dayjs().add(1, 'day').startOf('day');
     const slotsDisponibles = monthSlots
       .filter(slot => dayjs(slot.fecha).isSameOrAfter(tomorrow, 'day'))
@@ -45,9 +40,16 @@ class ReservasPublicas {
     if (slotsDisponibles.length > 0) {
       // Seleccionar el primer día con slots
       const primerDiaConSlots = dayjs(slotsDisponibles[0].fecha);
+      
+      // Si el primer día disponible está en otro mes, cambiar al mes correcto
+      if (primerDiaConSlots.month() !== this.currentMonth.month()) {
+        this.currentMonth = primerDiaConSlots.startOf('month');
+        await this.renderCalendar();
+      }
+      
       this.selectDate(primerDiaConSlots);
     } else {
-      // No hay slots futuros en este mes, cargar siguiente mes
+      // No hay slots en este mes, intentar con el siguiente
       this.currentMonth = this.currentMonth.add(1, 'month');
       await this.renderCalendar();
       await this.seleccionarPrimerDiaDisponible();
@@ -210,9 +212,12 @@ class ReservasPublicas {
       const data = await response.json();
       const slots = data.disponibles || data.slots_disponibles || [];
       
-      // Filtrar solo slots futuros
-      const tomorrow = dayjs().add(1, 'day').startOf('day').format('YYYY-MM-DD');
-      this.slotsCache[monthKey] = slots.filter(slot => slot.fecha >= tomorrow);
+      // Filtrar solo slots desde mañana en adelante (no incluir hoy)
+      const tomorrow = dayjs().add(1, 'day').startOf('day');
+      this.slotsCache[monthKey] = slots.filter(slot => {
+        const slotDate = dayjs(slot.fecha);
+        return slotDate.isSameOrAfter(tomorrow, 'day');
+      });
       
     } catch (error) {
       console.error('Error al cargar slots del mes:', error);
