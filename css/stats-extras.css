@@ -78,22 +78,37 @@
   background: var(--surface);
 }
 
-.btn-copiar-url {
+/* Contenedor de botones */
+.botones-url-container {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.btn-copiar-url,
+.btn-abrir-url-reservas {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  width: 100%;
+  flex: 1;
   height: 44px;
-  margin-top: 8px;
   border: none;
-  border-radius: 8px;
-  background: var(--primary-color);
-  color: white;
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: all 0.2s ease;
   font-size: 14px;
   font-weight: 500;
+}
+
+.btn-copiar-url {
+  background: var(--primary-color);
+  color: white;
+}
+
+.btn-abrir-url-reservas {
+  background: var(--success-color);
+  color: white;
 }
 
 .btn-copiar-url:hover {
@@ -102,7 +117,14 @@
   box-shadow: var(--shadow-md);
 }
 
-.btn-copiar-url:active {
+.btn-abrir-url-reservas:hover {
+  background: var(--success-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-copiar-url:active,
+.btn-abrir-url-reservas:active {
   transform: translateY(0);
 }
 
@@ -110,7 +132,8 @@
   background: var(--success-color);
 }
 
-.btn-copiar-url .material-icons {
+.btn-copiar-url .material-icons,
+.btn-abrir-url-reservas .material-icons {
   font-size: 20px;
 }
 

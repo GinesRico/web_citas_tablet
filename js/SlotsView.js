@@ -164,10 +164,6 @@ class SlotsView {
     diaNombre.className = 'dia-nombre-corto';
     diaNombre.textContent = dia.format('ddd D').toUpperCase(); // LUN 12
     
-    // Contenedor de botones de acción
-    const botonesAccion = document.createElement('div');
-    botonesAccion.className = 'botones-accion-slots';
-    
     // Botón copiar horarios
     const btnCopiar = document.createElement('button');
     btnCopiar.className = 'btn-copiar-horarios';
@@ -178,21 +174,8 @@ class SlotsView {
       this.copiarHorarios(dia, slots, btnCopiar);
     };
     
-    // Botón abrir URL
-    const btnAbrir = document.createElement('button');
-    btnAbrir.className = 'btn-abrir-url';
-    btnAbrir.innerHTML = '<span class="material-icons">open_in_new</span>';
-    btnAbrir.title = 'Abrir URL para reservar';
-    btnAbrir.onclick = (e) => {
-      e.stopPropagation();
-      this.abrirURLReserva(dia);
-    };
-    
-    botonesAccion.appendChild(btnCopiar);
-    botonesAccion.appendChild(btnAbrir);
-    
     header.appendChild(diaNombre);
-    header.appendChild(botonesAccion);
+    header.appendChild(btnCopiar);
     diaDiv.appendChild(header);
     
     // Lista vertical de slots
@@ -219,15 +202,6 @@ class SlotsView {
     diaDiv.appendChild(slotsList);
     
     return diaDiv;
-  }
-
-  /**
-   * Abre la URL de reservas con la fecha específica seleccionada
-   */
-  abrirURLReserva(dia) {
-    const fechaFormateada = dia.format('YYYY-MM-DD');
-    const url = `${window.location.origin}/reservas.html?fecha=${fechaFormateada}`;
-    window.open(url, '_blank');
   }
 
   /**

@@ -56,7 +56,7 @@
 <body>
   <!-- Pantalla de Login -->
   <div id="login-screen"
-    style="background: linear-gradient(135deg, #1a73e8, #1557b0); height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 24px;">
+    style="background: linear-gradient(135deg, #054496, #043775); height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 24px;">
     <img src="icons/logotipo_ARVERA_W.png" alt="Arvera" style="max-width: 320px; width: 60%; height: auto;" />
     <div id="login-card">
       <div id="g_id_onload" data-client_id="972104926970-o2negnvpu6kekcs7pc8vuqboaoopemq5.apps.googleusercontent.com"
@@ -175,9 +175,14 @@
           <div class="url-copiar-container">
             <input type="text" id="urlReservas" class="url-input" value="" readonly>
           </div>
-          <button id="btnCopiarUrl" class="btn-copiar-url" title="Copiar URL">
-            <span class="material-icons">content_copy</span>
-          </button>
+          <div class="botones-url-container">
+            <button id="btnCopiarUrl" class="btn-copiar-url" title="Copiar URL">
+              <span class="material-icons">content_copy</span>
+            </button>
+            <button id="btnAbrirUrl" class="btn-abrir-url-reservas" title="Abrir URL">
+              <span class="material-icons">open_in_new</span>
+            </button>
+          </div>
           <p class="url-ayuda">Comparte este enlace con tus clientes para que reserven citas online.</p>
         </div>
       </aside>

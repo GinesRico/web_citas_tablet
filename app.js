@@ -640,6 +640,18 @@ class CalendarioApp {
     });
 
     console.log('✓ Listener de copiar URL configurado');
+    
+    // Configurar botón de abrir URL
+    const btnAbrirUrl = document.getElementById('btnAbrirUrl');
+    if (btnAbrirUrl) {
+      btnAbrirUrl.addEventListener('click', () => {
+        const url = inputUrl.value;
+        if (url) {
+          window.open(url, '_blank');
+        }
+      });
+      console.log('✓ Listener de abrir URL configurado');
+    }
   }
 
   setupReservasUrl() {
