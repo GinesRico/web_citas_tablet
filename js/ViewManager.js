@@ -67,8 +67,9 @@ class ViewManager {
         this.slotsView.render();
       }
     } else if (vista === 'calendario') {
-      // El calendario se renderiza en verificarActualizaciones
-      if (forzarRender) {
+      // OPTIMIZACIÓN: Solo renderizar cuando se cambia A calendario
+      // No renderizar en cada carga de citas si ya estamos en otra vista
+      if (forzarRender || prevVista === 'slots') {
         this.calendarioView.render();
       }
     }
@@ -115,12 +116,15 @@ class ViewManager {
 
   /**
    * Renderiza la vista actual
+   * OPTIMIZACIÓN: Solo renderiza si la vista está visible
    */
   renderVistaActual() {
+    // Solo renderizar si estamos en calendario Y la vista está visible
     if (this.vistaActual === 'calendario') {
       this.calendarioView.render();
     } else if (this.vistaActual === 'slots') {
-      this.slotsView.render();
+      // Slots se renderiza bajo demanda (no siempre)
+      // No hacer nada aquí, slots se renderiza en cambiarVista
     }
   }
 

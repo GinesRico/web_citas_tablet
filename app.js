@@ -789,11 +789,19 @@ class CalendarioApp {
 
   async verificarActualizaciones() {
     try {
-      await this.cargarCitas();
-      // Actualizar la vista actual (calendario o slots)
-      this.viewManager.renderVistaActual();
-      // Actualizar estadísticas
-      this.estadisticasService.render();
+      // Recargar datos según la vista activa
+      if (this.viewManager.vistaActual === 'calendario') {
+        await this.cargarCitas();
+      } else if (this.viewManager.vistaActual === 'slots') {
+        // Para slots, solo renderizar sin recargar estadísticas
+        this.viewManager.slotsView.render();
+      }
+      
+      // Actualizar estadísticas solo si estamos en calendario
+      if (this.viewManager.vistaActual === 'calendario') {
+        this.estadisticasService.render();
+      }
+      
       this.ui.setLastUpdate(`✓ Sincronizado - ${dayjs().format('HH:mm:ss')}`);
     } catch (e) {
       console.error('Error verificando actualizaciones:', e);
@@ -803,9 +811,10 @@ class CalendarioApp {
 
   async cargarCitas() {
     try {
-      // Calcular rango de 30 días (2 semanas antes y 2 semanas después)
-      const inicio = this.currentWeek.subtract(14, 'day').format('YYYY-MM-DD');
-      const fin = this.currentWeek.add(16, 'day').format('YYYY-MM-DD');
+      // OPTIMIZACIÓN: Solo cargar la semana visible (7 días)
+      // Esto hace que la carga inicial sea instantánea como en vista Disponibles
+      const inicio = this.currentWeek.format('YYYY-MM-DD');
+      const fin = this.currentWeek.add(6, 'day').format('YYYY-MM-DD');
 
       const citas = await this.api.getCitas(inicio, fin);
 
@@ -1256,8 +1265,15 @@ class CalendarioApp {
     let nuevaFecha = this.currentWeek.add(offset * 7, 'day');
     // Ajustar a día laborable si cae en fin de semana
     this.currentWeek = this.diasLaborablesService.obtenerSiguienteDiaLaborable(nuevaFecha);
-    // Actualizar la vista actual (calendario o slots)
-    this.viewManager.renderVistaActual();
+    
+    // Recargar datos según la vista activa
+    if (this.viewManager.vistaActual === 'calendario') {
+      // Recargar citas de la nueva semana
+      this.cargarCitas();
+    } else if (this.viewManager.vistaActual === 'slots') {
+      // Recargar slots disponibles de la nueva semana
+      this.viewManager.slotsView.render();
+    }
   }
 
   closeModal() {
