@@ -1080,7 +1080,7 @@ class CalendarioApp {
         <div class="form-group">
           <label for="telefono">Teléfono *</label>
           <div style="display:flex;gap:8px;">
-            <select id="prefijo" name="prefijo" style="width:140px;padding:12px 8px;border:1px solid var(--border-color);border-radius:4px;font-size:14px;font-family:'Roboto',sans-serif;color:var(--text-primary);background:var(--surface);">
+            <select id="prefijo" name="prefijo" style="width:105px;padding:12px 8px;border:1px solid var(--border-color);border-radius:4px;font-size:14px;font-family:'Roboto',sans-serif;color:var(--text-primary);background:var(--surface);">
               <option value="+34" selected>🇪🇸 España +34</option>
               <option value="+33">🇫🇷 Francia +33</option>
               <option value="+49">🇩🇪 Alemania +49</option>

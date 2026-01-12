@@ -284,12 +284,12 @@ class ReservasPublicas {
         <div class="form-group">
           <label>Teléfono *</label>
           <div style="display:flex;gap:8px;">
-            <select id="prefijo" style="width:120px;">
-              <option value="+34" selected>ES +34</option>
-              <option value="+33">FR +33</option>
-              <option value="+351">PT +351</option>
-              <option value="+44">UK +44</option>
-              <option value="+1">US +1</option>
+            <select id="prefijo" style="width:90px;">
+              <option value="+34" selected>🇪🇸 +34</option>
+              <option value="+33">🇫🇷 +33</option>
+              <option value="+351">🇵🇹 +351</option>
+              <option value="+44">🇬🇧 +44</option>
+              <option value="+1">🇺🇸 +1</option>
             </select>
             <input type="tel" id="telefono" required placeholder="600 123 456" style="flex:1;">
           </div>
