@@ -166,7 +166,8 @@ class ReservasPublicas {
         dayElement.classList.add('selected');
       }
       
-      if (isPast || isWeekend || !isCurrentMonth) {
+      // Marcar como disabled: pasados, fines de semana, otros meses, o días sin slots
+      if (isPast || isWeekend || !isCurrentMonth || (!hasSlots && isCurrentMonth && !isPast && !isWeekend)) {
         dayElement.classList.add('disabled');
       }
       
@@ -174,8 +175,8 @@ class ReservasPublicas {
         dayElement.classList.add('has-slots');
       }
       
-      // Click handler
-      if (!isPast && !isWeekend && isCurrentMonth) {
+      // Click handler solo para días con slots disponibles
+      if (!isPast && !isWeekend && isCurrentMonth && hasSlots) {
         dayElement.style.cursor = 'pointer';
         dayElement.addEventListener('click', () => {
           this.selectDate(date);
