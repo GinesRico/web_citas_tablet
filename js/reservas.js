@@ -8,7 +8,6 @@ class ReservasPublicas {
     this.currentMonth = dayjs().startOf('month');
     this.selectedDate = null;
     this.slotSeleccionado = null;
-    this.timeFormat = '12'; // 12 o 24
     this.slotsCache = {}; // Cache de slots por mes
     
     this.init();
@@ -37,16 +36,6 @@ class ReservasPublicas {
 
     document.getElementById('btnMesSiguiente').addEventListener('click', () => {
       this.changeMonth(1);
-    });
-
-    // Toggle de formato de hora
-    document.querySelectorAll('.format-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
-        e.target.classList.add('active');
-        this.timeFormat = e.target.dataset.format;
-        this.renderSlots();
-      });
     });
 
     // Cerrar modal
@@ -248,13 +237,7 @@ class ReservasPublicas {
     
     daySlots.forEach(slot => {
       const horaLocal = dayjs.utc(slot.startTime).tz(CONFIG.TIMEZONE);
-      let timeText;
-      
-      if (this.timeFormat === '12') {
-        timeText = horaLocal.format('h:mm A');
-      } else {
-        timeText = horaLocal.format('HH:mm');
-      }
+      const timeText = horaLocal.format('HH:mm');
       
       const btn = document.createElement('button');
       btn.className = 'slot-btn';
@@ -288,10 +271,6 @@ class ReservasPublicas {
           <span class="material-icons">schedule</span>
           ${startLocal.format('HH:mm')} - ${endLocal.format('HH:mm')} (${CONFIG.DURACION_CITA} min)
         </p>
-        <p>
-          <span class="material-icons">place</span>
-          P.ind La Mezquita 1, Vera
-        </p>
       </div>
 
       <div id="mensajes"></div>
@@ -323,7 +302,7 @@ class ReservasPublicas {
 
         <div class="form-group">
           <label>Servicio *</label>
-          <div style="display:flex;flex-direction:column;gap:12px;margin-top:8px;">
+          <div style="display:flex;flex-direction:column;gap:12px;margin-top:8px;align-items:flex-start;">
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
               <input type="checkbox" id="servicio-neumaticos" value="Neumáticos">
               <span>Neumáticos</span>

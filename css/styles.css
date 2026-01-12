@@ -9,8 +9,8 @@
 }
 
 :root {
-  --primary-color: #1a73e8;
-  --primary-dark: #1557b0;
+  --primary-color: #054496;
+  --primary-dark: #043775;
   --success-color: #4caf50;
   --success-light: #e8f5e9;
   --success-dark: #388e3c;
@@ -126,7 +126,7 @@ body {
 }
 
 .btn-icon:hover {
-  background: #e8f0fe;
+  background: #e3f2fd;
   color: var(--primary-color);
 }
 
@@ -244,11 +244,11 @@ body {
 
 .btn-accion-llamar:hover {
   background: #e3f2fd;
-  border-color: #1976d2;
+  border-color: #054496;
 }
 
 .btn-accion-llamar:hover .material-icons {
-  color: #1976d2;
+  color: #054496;
 }
 
 .btn-accion-modificar:hover {
