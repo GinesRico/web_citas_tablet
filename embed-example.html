@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ejemplo de Embed - Reservas Arvera</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 {
+      color: #054496;
+      text-align: center;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .code-block {
+      background: #f8f9fa;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      padding: 15px;
+      margin: 20px 0;
+      overflow-x: auto;
+    }
+    pre {
+      margin: 0;
+      font-size: 14px;
+    }
+    code {
+      font-family: 'Courier New', monospace;
+      color: #054496;
+    }
+    .note {
+      background: #e3f2fd;
+      border-left: 4px solid #054496;
+      padding: 12px;
+      margin: 15px 0;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📅 Embed - Sistema de Reservas Arvera</h1>
+    
+    <h2>Opción 1: Iframe Simple (Recomendado)</h2>
+    <p>Copia y pega este código en tu página web:</p>
+    
+    <div class="code-block">
+      <pre><code>&lt;!-- Reservas Arvera - Iframe Embed --&gt;
+&lt;div style="width:100%;height:800px;overflow:hidden;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);"&gt;
+  &lt;iframe 
+    src="https://citas.arvera.es/reservas.html?embed=true"
+    style="width:100%;height:100%;border:none;"
+    title="Reservar Cita - Arvera Neumáticos"
+    loading="lazy"
+  &gt;&lt;/iframe&gt;
+&lt;/div&gt;</code></pre>
+    </div>
+
+    <div class="note">
+      <strong>💡 Tip:</strong> Ajusta el <code>height</code> según tus necesidades (recomendado: 800px para desktop, 100vh para móvil)
+    </div>
+
+    <h2>Opción 2: Responsive con altura automática</h2>
+    <p>Para que se adapte mejor a diferentes dispositivos:</p>
+    
+    <div class="code-block">
+      <pre><code>&lt;!-- Reservas Arvera - Responsive Embed --&gt;
+&lt;div id="arvera-reservas-embed"&gt;&lt;/div&gt;
+&lt;script&gt;
+  (function() {
+    var container = document.getElementById('arvera-reservas-embed');
+    var iframe = document.createElement('iframe');
+    
+    iframe.src = 'https://citas.arvera.es/reservas.html?embed=true';
+    iframe.style.width = '100%';
+    iframe.style.height = window.innerWidth < 768 ? '100vh' : '800px';
+    iframe.style.border = 'none';
+    iframe.style.borderRadius = '8px';
+    iframe.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+    iframe.title = 'Reservar Cita - Arvera Neumáticos';
+    iframe.loading = 'lazy';
+    
+    container.appendChild(iframe);
+    
+    // Ajustar altura en resize
+    window.addEventListener('resize', function() {
+      iframe.style.height = window.innerWidth < 768 ? '100vh' : '800px';
+    });
+  })();
+&lt;/script&gt;</code></pre>
+    </div>
+
+    <h2>Opción 3: Con lazy loading y placeholder</h2>
+    <p>Optimizado para carga rápida:</p>
+    
+    <div class="code-block">
+      <pre><code>&lt;!-- Reservas Arvera - Lazy Load --&gt;
+&lt;div id="arvera-booking" style="width:100%;min-height:800px;background:#f9fafb;border-radius:8px;position:relative;"&gt;
+  &lt;div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;"&gt;
+    &lt;div style="width:50px;height:50px;border:4px solid #054496;border-top-color:transparent;border-radius:50%;margin:0 auto 15px;animation:spin 1s linear infinite;"&gt;&lt;/div&gt;
+    &lt;p style="color:#6b7280;font-family:Arial,sans-serif;"&gt;Cargando calendario...&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+&lt;style&gt;
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+&lt;/style&gt;
+&lt;script&gt;
+  (function() {
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          var container = document.getElementById('arvera-booking');
+          container.innerHTML = '&lt;iframe src="https://citas.arvera.es/reservas.html?embed=true" style="width:100%;height:800px;border:none;border-radius:8px;" title="Reservar Cita"&gt;&lt;/iframe&gt;';
+          observer.disconnect();
+        }
+      });
+    });
+    observer.observe(document.getElementById('arvera-booking'));
+  })();
+&lt;/script&gt;</code></pre>
+    </div>
+
+    <h2>⚙️ Personalización</h2>
+    <p>Puedes personalizar estos parámetros:</p>
+    <ul>
+      <li><strong>width:</strong> Ancho del contenedor (100%, 800px, etc.)</li>
+      <li><strong>height:</strong> Altura del iframe (800px, 100vh, etc.)</li>
+      <li><strong>border-radius:</strong> Bordes redondeados (0-16px)</li>
+      <li><strong>box-shadow:</strong> Sombra del contenedor</li>
+    </ul>
+
+    <div class="note">
+      <strong>🔒 Seguridad:</strong> El iframe está aislado y no puede acceder al contenido de la página padre. Los datos de reserva se envían de forma segura a través de tu API.
+    </div>
+
+    <h2>📱 Para WordPress</h2>
+    <p>Si usas WordPress, agrega este código en un bloque HTML personalizado o en el editor de código:</p>
+    
+    <div class="code-block">
+      <pre><code>[arvera-reservas height="800"]
+
+&lt;!-- O usa el shortcode --&gt;
+&lt;div class="arvera-reservas-widget"&gt;
+  &lt;iframe 
+    src="https://citas.arvera.es/reservas.html?embed=true"
+    style="width:100%;height:800px;border:none;border-radius:8px;"
+    title="Reservar Cita"
+  &gt;&lt;/iframe&gt;
+&lt;/div&gt;</code></pre>
+    </div>
+
+    <h2>🎨 Ejemplo en vivo</h2>
+    <p>Así se ve integrado:</p>
+    
+    <!-- Ejemplo real -->
+    <div style="width:100%;height:800px;overflow:hidden;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);margin-top:20px;">
+      <iframe 
+        src="reservas.html?embed=true"
+        style="width:100%;height:100%;border:none;"
+        title="Reservar Cita - Arvera Neumáticos"
+      ></iframe>
+    </div>
+  </div>
+</body>
+</html>

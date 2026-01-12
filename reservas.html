@@ -36,7 +36,28 @@
     dayjs.extend(window.dayjs_plugin_utc);
     dayjs.extend(window.dayjs_plugin_timezone);
     dayjs.locale('es');
+    
+    // Detectar modo embed (iframe o parámetro URL)
+    const urlParams = new URLSearchParams(window.location.search);
+    const isEmbed = urlParams.get('embed') === 'true' || window.self !== window.top;
+    
+    if (isEmbed) {
+      document.documentElement.classList.add('embed-mode');
+    }
   </script>
+  <style>
+    /* Ocultar sidebar en modo embed */
+    .embed-mode .business-sidebar {
+      display: none;
+    }
+    .embed-mode .calcom-container {
+      grid-template-columns: 1fr;
+    }
+    .embed-mode body {
+      margin: 0;
+      padding: 0;
+    }
+  </style>
 </head>
 <body>
   <!-- Contenedor principal estilo Cal.com -->
