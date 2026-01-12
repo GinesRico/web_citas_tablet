@@ -954,12 +954,12 @@ body.device-mobile .sidebar {
     order: 2;
     justify-content: flex-start;
     gap: 4px;
-    flex-shrink: 0;
+    flex: 0 0 auto;
   }
 
   .tab-btn {
     font-size: 12px;
-    padding: 6px 12px;
+    padding: 6px 8px;
   }
 
   .tab-btn span {
@@ -971,15 +971,15 @@ body.device-mobile .sidebar {
     display: block;
     font-size: 10px;
     white-space: nowrap;
-    margin: 0 auto;
-    flex: 1;
+    flex: 1 1 auto;
     text-align: center;
+    min-width: 0;
   }
 
   .header-actions {
     order: 2;
     gap: 4px;
-    flex-shrink: 0;
+    flex: 0 0 auto;
   }
 
   .btn-icon {
