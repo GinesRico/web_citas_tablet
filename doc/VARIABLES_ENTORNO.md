@@ -4,14 +4,31 @@
 
 Este proyecto utiliza variables de entorno para gestionar configuraciones sensibles de forma segura. Las credenciales y URLs de servicios externos no se almacenan en el código fuente, sino que se configuran como variables de entorno en Vercel.
 
+## 🔐 Seguridad Mejorada
+
+### Autenticación del Endpoint de Configuración
+
+El endpoint `/api/env` está protegido con:
+- ✅ Token de autenticación (`CONFIG_TOKEN`)
+- ✅ Validación de origen (solo dominios permitidos)
+- ✅ API_KEY no expuesta al frontend (se usa en `/api/proxy`)
+
+---
+
 ## 🔐 Variables de Entorno Disponibles
+
+### Seguridad (CRÍTICAS)
+
+| Variable | Descripción | Ejemplo | Requerida |
+|----------|-------------|---------|-----------|
+| `CONFIG_TOKEN` | Token para autenticar acceso a `/api/env` | `uuid-aqui` | **Sí** |
 
 ### API y Backend
 
 | Variable | Descripción | Valor por defecto | Requerida |
 |----------|-------------|-------------------|-----------|
 | `API_BASE_URL` | URL base de la API REST | `https://api-citas-seven.vercel.app/api` | No |
-| `API_KEY` | Token de autenticación para la API | `(vacío)` | **Sí** |
+| `API_KEY` | Token de autenticación para la API (solo backend) | `(vacío)` | **Sí** |
 | `WEBHOOK_URL` | URL del webhook n8n para notificaciones | `https://webhook.arvera.es/webhook/cal-event` | No |
 | `CHECK_UPDATE_URL` | URL del webhook para verificar actualizaciones | `https://webhook.arvera.es/webhook/check-update` | No |
 

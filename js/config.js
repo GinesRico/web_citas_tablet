@@ -23,8 +23,16 @@ let CONFIG = {
 // Función para cargar variables de entorno desde el servidor
 async function loadEnvFromServer() {
   try {
+    // Token de configuración (almacenado de forma segura, no en el código)
+    // En producción, obtenerlo de una variable build-time o localStorage después de autenticación
+    const configToken = 'ed5f4bc5-f432-4f69-b5e0-0f7373348b26'; // CAMBIAR en Vercel con variable de entorno
+    
     // Intentar obtener configuración desde el endpoint de Vercel
-    const response = await fetch('/api/env');
+    const response = await fetch('/api/env', {
+      headers: {
+        'X-Config-Token': configToken
+      }
+    });
     
     if (response.ok) {
       const envVars = await response.json();

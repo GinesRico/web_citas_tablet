@@ -8,6 +8,10 @@
     {
       "source": "/api/env",
       "destination": "/api/env.py"
+    },
+    {
+      "source": "/api/proxy/(.*)",
+      "destination": "/api/proxy.py"
     }
   ],
   "headers": [
