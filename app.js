@@ -462,10 +462,10 @@ class EstadisticasService {
 
   calcular() {
     const hoy = dayjs().format('YYYY-MM-DD');
-    // Calcular estadísticas para 5 días laborables (L-V)
+    // Calcular estadísticas para 7 días laborables
     const diasSemana = this.app.diasLaborablesService.generarDiasLaborables(
       this.app.currentWeek,
-      5
+      7
     );
 
     // Fechas de la semana visible
@@ -811,13 +811,14 @@ class CalendarioApp {
 
   async cargarCitas() {
     try {
-      // OPTIMIZACIÓN: Cargar 5 días laborables (L-V de una semana)
-      // Esto evita mezclar semanas y simplifica la lógica
-      const diasLaborables = this.diasLaborablesService.generarDiasLaborables(this.currentWeek, 5);
+      // OPTIMIZACIÓN: Cargar el rango que cubre los días laborables visibles
+      // Generar los días laborables que se mostrarán en el calendario
+      const diasLaborables = this.diasLaborablesService.generarDiasLaborables(this.currentWeek, 7);
       
       // Obtener la fecha de inicio (primer día laborable) y fin (último día laborable)
+      // Agregamos 1 día extra al final para asegurar que cargue todo el rango visible
       const inicio = diasLaborables[0].format('YYYY-MM-DD');
-      const fin = diasLaborables[diasLaborables.length - 1].format('YYYY-MM-DD');
+      const fin = diasLaborables[diasLaborables.length - 1].add(1, 'day').format('YYYY-MM-DD');
 
       const citas = await this.api.getCitas(inicio, fin);
 
