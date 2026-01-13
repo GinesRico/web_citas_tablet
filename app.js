@@ -119,11 +119,19 @@ class ApiService {
     }
   }
 
-  async getCitas(startDate = null, endDate = null) {
+  async getCitas(startDate = null, endDate = null, estado = null) {
     // Usar proxy en lugar de llamada directa a la API
     let url = `/api/proxy/citas`;
+    const params = [];
     if (startDate && endDate) {
-      url += `?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
+      params.push(`startDate=${encodeURIComponent(startDate)}`);
+      params.push(`endDate=${encodeURIComponent(endDate)}`);
+    }
+    if (estado) {
+      params.push(`estado=${encodeURIComponent(estado)}`);
+    }
+    if (params.length > 0) {
+      url += `?${params.join('&')}`;
     }
     const res = await this.fetch(url);
     if (!res.ok) throw new Error('Error al obtener citas');
@@ -422,7 +430,6 @@ class MiniCalendarioService {
 
     // Marcar si hay citas
     const tieneCitas = this.app.citas.some(c => {
-      if (c.estado !== 'Confirmada') return false;
       const fechaCita = dayjs.utc(c.start).local().format('YYYY-MM-DD');
       return fechaCita === dia.format('YYYY-MM-DD');
     });
@@ -473,13 +480,11 @@ class EstadisticasService {
 
     // Citas de hoy
     const citasHoy = this.app.citas.filter(c => {
-      if (c.estado !== 'Confirmada') return false;
       return dayjs.utc(c.start).local().format('YYYY-MM-DD') === hoy;
     }).length;
 
     // Citas de la semana VISIBLE (no "esta semana")
     const citasSemana = this.app.citas.filter(c => {
-      if (c.estado !== 'Confirmada') return false;
       const fechaCita = dayjs.utc(c.start).local().format('YYYY-MM-DD');
       return fechasSemana.includes(fechaCita);
     }).length;
@@ -494,7 +499,6 @@ class EstadisticasService {
     // Servicio más solicitado de la semana VISIBLE
     const servicios = {};
     this.app.citas.forEach(c => {
-      if (c.estado !== 'Confirmada') return;
       const fechaCita = dayjs.utc(c.start).local().format('YYYY-MM-DD');
       if (fechasSemana.includes(fechaCita) && c.service) {
         servicios[c.service] = (servicios[c.service] || 0) + 1;
@@ -820,7 +824,8 @@ class CalendarioApp {
       const inicio = diasLaborables[0].format('YYYY-MM-DD');
       const fin = diasLaborables[diasLaborables.length - 1].add(1, 'day').format('YYYY-MM-DD');
 
-      const citas = await this.api.getCitas(inicio, fin);
+      // Cargar solo citas confirmadas desde la API (ahorra procesamiento)
+      const citas = await this.api.getCitas(inicio, fin, 'Confirmada');
 
       // Validar que sea un array
       this.citas = Array.isArray(citas) ? citas : [];
@@ -843,6 +848,89 @@ class CalendarioApp {
     this.ui.setRefreshLoading(true);
     await this.verificarActualizaciones();
     this.ui.setRefreshLoading(false);
+  }
+
+  async mostrarCitasCanceladas() {
+    try {
+      // Cargar citas canceladas (sin filtrar por fechas)
+      const citasCanceladas = await this.api.getCitas(null, null, 'Cancelada');
+      
+      if (citasCanceladas.length === 0) {
+        this.ui.showModal('<h3>Historial de Canceladas</h3><p style="text-align:center;color:var(--text-secondary);margin:24px 0;">No hay citas canceladas.</p>');
+        return;
+      }
+
+      // Ordenar por fecha (más reciente primero)
+      citasCanceladas.sort((a, b) => dayjs(b.start).valueOf() - dayjs(a.start).valueOf());
+
+      // Generar HTML del listado
+      const listado = citasCanceladas.map(cita => {
+        const fechaHora = dayjs.utc(cita.start).local();
+        const fecha = fechaHora.format('DD/MM/YYYY');
+        const hora = fechaHora.format('HH:mm');
+        const dia = fechaHora.format('dddd');
+        
+        return `
+          <div class="cita-cancelada-item" style="padding:12px;border-bottom:1px solid var(--border-color);cursor:pointer;" onclick="window.app.mostrarDetalleCitaCancelada('${cita.id}')">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <strong style="color:var(--text-primary);">${cita.name}</strong>
+              <span style="font-size:12px;color:var(--text-secondary);">${fecha}</span>
+            </div>
+            <div style="display:flex;gap:12px;font-size:13px;color:var(--text-secondary);">
+              <span>${dia} ${hora}</span>
+              <span>•</span>
+              <span>${cita.service}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const html = `
+        <h3 style="margin-bottom:16px;">Historial de Citas Canceladas</h3>
+        <div style="max-height:500px;overflow-y:auto;">
+          ${listado}
+        </div>
+        <p style="text-align:center;font-size:13px;color:var(--text-secondary);margin-top:16px;">
+          Total: ${citasCanceladas.length} cita${citasCanceladas.length !== 1 ? 's' : ''} cancelada${citasCanceladas.length !== 1 ? 's' : ''}
+        </p>
+      `;
+
+      this.ui.showModal(html);
+    } catch (error) {
+      console.error('Error cargando citas canceladas:', error);
+      this.ui.showError('Error al cargar el historial de canceladas');
+    }
+  }
+
+  mostrarDetalleCitaCancelada(citaId) {
+    // Buscar la cita en las citas cargadas o cargar desde API
+    this.api.getCitas(null, null, 'Cancelada').then(citasCanceladas => {
+      const cita = citasCanceladas.find(c => c.id === citaId);
+      if (!cita) return;
+
+      const fechaHora = dayjs.utc(cita.start).local();
+      const hora = fechaHora.format('HH:mm');
+
+      const html = `
+        <h3 style="margin-bottom:16px;color:var(--text-error);">
+          <span class="material-icons" style="vertical-align:middle;font-size:20px;">cancel</span>
+          Cita Cancelada
+        </h3>
+        <div class="cita-detalle" style="font-size:14px;line-height:1.6;">
+          <p><strong>Fecha:</strong> ${fechaHora.format('dddd, D MMMM YYYY')}</p>
+          <p><strong>Hora:</strong> ${hora}</p>
+          <p><strong>Cliente:</strong> ${cita.name}</p>
+          <p><strong>Teléfono:</strong> <a href="tel:${cita.phone}">${cita.phone}</a></p>
+          ${cita.email ? `<p><strong>Email:</strong> ${cita.email}</p>` : ''}
+          <p><strong>Servicio:</strong> ${cita.service}</p>
+          ${cita.matricula ? `<p><strong>Matrícula:</strong> ${cita.matricula}</p>` : ''}
+          ${cita.modelo ? `<p><strong>Modelo:</strong> ${cita.modelo}</p>` : ''}
+          ${cita.notes ? `<p><strong>Notas:</strong> ${cita.notes}</p>` : ''}
+        </div>
+      `;
+
+      this.ui.showModal(html);
+    });
   }
 
   render() {
@@ -1062,7 +1150,7 @@ class CalendarioApp {
   }
 
   async eliminarCita(citaId) {
-    if (confirm('¿Eliminar esta cita?')) {
+    if (confirm('¿Cancelar esta cita? Se moverá al historial de canceladas.')) {
       try {
         const response = await this.api.eliminarCita(citaId);
         if (response.ok) {
@@ -1071,11 +1159,11 @@ class CalendarioApp {
           this.notificarCambio();
           await this.cargarCitas();
         } else {
-          alert('Error al eliminar la cita');
+          alert('Error al cancelar la cita');
         }
       } catch (error) {
-        console.error('Error eliminando cita:', error);
-        alert('Error al eliminar la cita');
+        console.error('Error cancelando cita:', error);
+        alert('Error al cancelar la cita');
       }
     }
   }
@@ -1105,43 +1193,43 @@ class CalendarioApp {
         <div class="form-group">
           <label for="telefono">Teléfono *</label>
           <div style="display:flex;gap:8px;">
-            <select id="prefijo" name="prefijo" style="width:105px;padding:12px 8px;border:1px solid var(--border-color);border-radius:4px;font-size:14px;font-family:'Roboto',sans-serif;color:var(--text-primary);background:var(--surface);">
-              <option value="+34" selected>🇪🇸 España +34</option>
-              <option value="+33">🇫🇷 Francia +33</option>
-              <option value="+49">🇩🇪 Alemania +49</option>
-              <option value="+39">🇮🇹 Italia +39</option>
-              <option value="+351">🇵🇹 Portugal +351</option>
-              <option value="+44">🇬🇧 Reino Unido +44</option>
-              <option value="+32">🇧🇪 Bélgica +32</option>
-              <option value="+31">🇳🇱 Holanda +31</option>
-              <option value="+41">🇨🇭 Suiza +41</option>
-              <option value="+43">🇦🇹 Austria +43</option>
-              <option value="+353">🇮🇪 Irlanda +353</option>
-              <option value="+48">🇵🇱 Polonia +48</option>
-              <option value="+420">🇨🇿 Chequia +420</option>
-              <option value="+30">🇬🇷 Grecia +30</option>
-              <option value="+46">🇸🇪 Suecia +46</option>
-              <option value="+47">🇳🇴 Noruega +47</option>
-              <option value="+45">🇩🇰 Dinamarca +45</option>
-              <option value="+358">🇫🇮 Finlandia +358</option>
-              <option value="+40">🇷🇴 Rumania +40</option>
-              <option value="+359">🇧🇬 Bulgaria +359</option>
-              <option value="+1">🇺🇸 USA/Canadá +1</option>
-              <option value="+52">🇲🇽 México +52</option>
-              <option value="+54">🇦🇷 Argentina +54</option>
-              <option value="+55">🇧🇷 Brasil +55</option>
-              <option value="+56">🇨🇱 Chile +56</option>
-              <option value="+57">🇨🇴 Colombia +57</option>
-              <option value="+58">🇻🇪 Venezuela +58</option>
-              <option value="+51">🇵🇪 Perú +51</option>
-              <option value="+593">🇪🇨 Ecuador +593</option>
-              <option value="+598">🇺🇾 Uruguay +598</option>
-              <option value="+212">🇲🇦 Marruecos +212</option>
-              <option value="+213">🇩🇿 Argelia +213</option>
-              <option value="+86">🇨🇳 China +86</option>
-              <option value="+81">🇯🇵 Japón +81</option>
-              <option value="+82">🇰🇷 Corea Sur +82</option>
-              <option value="+91">🇮🇳 India +91</option>
+            <select id="prefijo" name="prefijo" style="width:85px;padding:12px 8px;border:1px solid var(--border-color);border-radius:4px;font-size:14px;font-family:'Roboto',sans-serif;color:var(--text-primary);background:var(--surface);">
+              <option value="+34" selected>🇪🇸 +34</option>
+              <option value="+33">🇫🇷 +33</option>
+              <option value="+49">🇩🇪 +49</option>
+              <option value="+39">🇮🇹 +39</option>
+              <option value="+351">🇵🇹 +351</option>
+              <option value="+44">🇬🇧 +44</option>
+              <option value="+32">🇧🇪 +32</option>
+              <option value="+31">🇳🇱 +31</option>
+              <option value="+41">🇨🇭 +41</option>
+              <option value="+43">🇦🇹 +43</option>
+              <option value="+353">🇮🇪 +353</option>
+              <option value="+48">🇵🇱 +48</option>
+              <option value="+420">🇨🇿 +420</option>
+              <option value="+30">🇬🇷 +30</option>
+              <option value="+46">🇸🇪 +46</option>
+              <option value="+47">🇳🇴 +47</option>
+              <option value="+45">🇩🇰 +45</option>
+              <option value="+358">🇫🇮 +358</option>
+              <option value="+40">🇷🇴 +40</option>
+              <option value="+359">🇧🇬 +359</option>
+              <option value="+1">🇺🇸 +1</option>
+              <option value="+52">🇲🇽 +52</option>
+              <option value="+54">🇦🇷 +54</option>
+              <option value="+55">🇧🇷 +55</option>
+              <option value="+56">🇨🇱 +56</option>
+              <option value="+57">🇨🇴 +57</option>
+              <option value="+58">🇻🇪 +58</option>
+              <option value="+51">🇵🇪 +51</option>
+              <option value="+593">🇪🇨 +593</option>
+              <option value="+598">🇺🇾 +598</option>
+              <option value="+212">🇲🇦 +212</option>
+              <option value="+213">🇩🇿 +213</option>
+              <option value="+86">🇨🇳 +86</option>
+              <option value="+81">🇯🇵 +81</option>
+              <option value="+82">🇰🇷 +82</option>
+              <option value="+91">🇮🇳 +91</option>
             </select>
             <input type="tel" id="telefono" name="telefono" required placeholder="600 123 456" inputmode="tel" style="flex:1;">
           </div>

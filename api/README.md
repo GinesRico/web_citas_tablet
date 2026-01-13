@@ -4,10 +4,11 @@ API REST para gestión de citas desplegada en Vercel con base de datos Supabase 
 
 ## 🚀 Características
 
-- ✅ CRUD completo de citas
-- ✅ Filtrado por rango de fechas
-- ✅ **Consulta de horas disponibles en un rango de fechas**
-- ✅ Sistema de cancelación con tokens seguros
+- ✅ CRUD completo de citas con autenticación por token
+- ✅ Filtrado por rango de fechas y estado
+- ✅ **Cancelación suave**: DELETE cambia estado a "Cancelada" (no elimina)
+- ✅ Sistema de cancelación pública con tokens seguros
+- ✅ Webhooks para notificaciones
 - ✅ CORS habilitado
 - ✅ Base de datos PostgreSQL (Supabase)
 - ✅ Desplegado en Vercel
@@ -20,20 +21,36 @@ https://api-citas-seven.vercel.app
 
 ## 📋 Endpoints
 
+**Autenticación requerida:** Todos los endpoints (excepto `/api/cancelar`) requieren un token de API en el header:
+```
+Authorization: Bearer TU_TOKEN_AQUI
+```
+
 ### GET /api/citas
-Obtiene todas las citas o filtra por rango de fechas.
+Obtiene todas las citas o filtra por rango de fechas y/o estado.
+
+**Headers:**
+```
+Authorization: Bearer TU_TOKEN_AQUI
+```
 
 **Query Parameters (opcionales):**
 - `startDate` - Fecha inicio en ISO 8601 (ej: `2026-01-01T00:00:00Z`)
 - `endDate` - Fecha fin en ISO 8601 (ej: `2026-01-31T23:59:59Z`)
+- `estado` - Filtra por estado: `Confirmada`, `Cancelada`, `Completada`
 
 **Ejemplos:**
 ```bash
 # Todas las citas
-curl https://api-citas-seven.vercel.app/api/citas
+curl -H "Authorization: Bearer TU_TOKEN" https://api-citas-seven.vercel.app/api/citas
 
-# Citas de enero 2026
-curl "https://api-citas-seven.vercel.app/api/citas?startDate=2026-01-01T00:00:00Z&endDate=2026-01-31T23:59:59Z"
+# Solo citas confirmadas (excluye canceladas)
+curl -H "Authorization: Bearer TU_TOKEN" \
+  "https://api-citas-seven.vercel.app/api/citas?estado=Confirmada"
+
+# Citas de enero 2026 confirmadas
+curl -H "Authorization: Bearer TU_TOKEN" \
+  "https://api-citas-seven.vercel.app/api/citas?startDate=2026-01-01T00:00:00Z&endDate=2026-01-31T23:59:59Z&estado=Confirmada"
 ```
 
 **Respuesta:**
@@ -51,6 +68,8 @@ curl "https://api-citas-seven.vercel.app/api/citas?startDate=2026-01-01T00:00:00
     "Modelo": "Toyota Corolla",
     "Notas": "Prueba",
     "Estado": "Confirmada",
+    "Notificacion": "enviada",
+    "Recordatorio": "no enviada",
     "CancelToken": "QmUimF6j8pOpl2CaHRQ5uD7HWCLffZGerWCy4vo7FKI",
     "Url_Cancelacion": "https://api-citas-seven.vercel.app/api/cancelar?token=..."
   }
@@ -60,53 +79,134 @@ curl "https://api-citas-seven.vercel.app/api/citas?startDate=2026-01-01T00:00:00
 ### POST /api/citas
 Crea una nueva cita.
 
+**Headers:**
+```
+Authorization: Bearer TU_TOKEN_AQUI
+Content-Type: application/json
+```
+
 **Campos obligatorios:**
 - `Nombre` - Nombre del cliente
 - `Telefono` - Teléfono de contacto
 - `Servicio` - Tipo de servicio
-- `startTime` - Fecha/hora inicio en **ISO 8601** (ej: `2026-01-20T10:30:00Z`)
-- `endTime` - Fecha/hora fin en **ISO 8601** (ej: `2026-01-20T11:00:00Z`)
+- `startTime` - Fecha/hora inicio en ISO 8601 (ej: `2026-01-20T10:30:00Z`)
+- `endTime` - Fecha/hora fin en ISO 8601 (ej: `2026-01-20T11:00:00Z`)
 
 **Campos opcionales:**
 - `Email`, `Matricula`, `Modelo`, `Notas`
 
-**Body:**
-```json
-{
-  "Nombre": "Juan Pérez",
-  "Telefono": "+34600000000",
-  "Email": "juan@email.com",
-  "Servicio": "Revisión",
-  "startTime": "2026-01-20T10:30:00Z",
-  "endTime": "2026-01-20T11:00:00Z",
-  "Matricula": "1234ABC",
-  "Modelo": "Ford Focus",
-  "Notas": "Cliente prefiere por la mañana"
-}
+**Ejemplo:**
+```bash
+curl -X POST https://api-citas-seven.vercel.app/api/citas \
+  -H "Authorization: Bearer TU_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "Nombre": "Juan Pérez",
+    "Telefono": "+34600000000",
+    "Email": "juan@email.com",
+    "Servicio": "Revisión",
+    "startTime": "2026-01-20T10:30:00Z",
+    "endTime": "2026-01-20T11:00:00Z",
+    "Matricula": "1234ABC",
+    "Modelo": "Ford Focus",
+    "Notas": "Cliente prefiere por la mañana"
+  }'
 ```
 
 **Respuesta:** 201 Created
-- Se genera automáticamente: `Id`, `CancelToken`, `Url_Cancelacion`, `Estado`
+- Se genera automáticamente: `Id`, `CancelToken`, `Url_Cancelacion`, `Estado`, `Notificacion`, `Recordatorio`
+- Se envía webhook si está configurado
 
 ### GET /api/citas/{id}
 Obtiene una cita específica por ID.
 
-### PUT /api/citas/{id}
-Actualiza una cita existente. Útil para drag & drop (modificar horarios).
+**Headers:**
+```
+Authorization: Bearer TU_TOKEN_AQUI
+```
 
-**Body (ejemplo drag & drop):**
-```json
-{
-  "startTime": "2026-01-21T15:00:00Z",
-  "endTime": "2026-01-21T15:30:00Z"
-}
+### PUT /api/citas/{id}
+Actualiza una cita existente. Permite modificar cualquier campo de la cita.
+
+**Headers:**
+```
+Authorization: Bearer TU_TOKEN_AQUI
+Content-Type: application/json
+```
+
+**Campos actualizables:**
+- `Nombre`, `Telefono`, `Email`, `Servicio`
+- `startTime`, `endTime` - Para drag & drop (modificar horarios)
+- `Matricula`, `Modelo`, `Notas`, `Estado`
+- `Notificacion` - Estado de notificación: `"enviada"` o `"no enviada"`
+- `Recordatorio` - Estado de recordatorio: `"enviada"` o `"no enviada"`
+
+**Ejemplos:**
+
+```bash
+# Actualizar horario (drag & drop)
+curl -X PUT https://api-citas-seven.vercel.app/api/citas/CITA_ID \
+  -H "Authorization: Bearer TU_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "startTime": "2026-01-21T15:00:00Z",
+    "endTime": "2026-01-21T15:30:00Z"
+  }'
+
+# Marcar notificación como enviada
+curl -X PUT https://api-citas-seven.vercel.app/api/citas/CITA_ID \
+  -H "Authorization: Bearer TU_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"Notificacion": "enviada"}'
 ```
 
 ### DELETE /api/citas/{id}
-Elimina una cita por ID.
+**Cancela una cita** cambiando su estado a `Cancelada` (no la elimina de la base de datos).
+
+**Headers:**
+```
+Authorization: Bearer TU_TOKEN_AQUI
+```
+
+**¿Por qué cancelar en lugar de eliminar?**
+- ✅ Mantiene historial completo de citas
+- ✅ Permite análisis de cancelaciones
+- ✅ Las citas canceladas no aparecen cuando filtras por `estado=Confirmada`
+- ✅ El horario queda disponible para nuevas reservas
+- ✅ Se puede recuperar información si es necesario
+
+**Ejemplo:**
+```bash
+curl -X DELETE https://api-citas-seven.vercel.app/api/citas/CITA_ID \
+  -H "Authorization: Bearer TU_TOKEN"
+```
+
+**Respuesta:**
+```json
+{
+  "mensaje": "Cita cancelada correctamente",
+  "cita": {
+    "Id": "20260108173953-2683cfa7",
+    "Estado": "Cancelada",
+    ...
+  }
+}
+```
+
+**💡 Tip:** Para mostrar solo citas activas en el calendario, usa:
+```bash
+curl -H "Authorization: Bearer TU_TOKEN" \
+  "https://api-citas-seven.vercel.app/api/citas?estado=Confirmada"
+```
 
 ### GET /api/cancelar?token={token}
-Cancela una cita usando el token de cancelación.
+**Endpoint público** (sin autenticación) para cancelar citas usando el token de cancelación.
+
+**Características:**
+- ✅ No requiere token de API
+- ✅ Permite a los clientes cancelar sus citas con un solo clic
+- ✅ Token único e irrepetible por cita
+- ✅ URL incluida automáticamente en la respuesta de creación
 
 **Ejemplo:**
 ```bash
@@ -193,10 +293,15 @@ Configura en **Vercel Dashboard → Settings → Environment Variables**:
 
 ```
 SUPABASE_URL=https://wgsqgvxoipnbetxinzgb.supabase.co
-SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-API_TOKEN=tu-token-seguro-generado
-WEBHOOK_URL=https://tu-webhook-url.com/endpoint
+SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... (anon public key)
+API_TOKEN=tu-token-seguro-para-autenticacion
+WEBHOOK_URL=https://tu-webhook.com/endpoint (opcional)
 ```
+
+**Notas:**
+- `SUPABASE_KEY`: Obtén la clave **anon/public** desde Supabase → Settings → API
+- `API_TOKEN`: Genera un token seguro para autenticar tus peticiones
+- `WEBHOOK_URL`: (Opcional) URL donde se enviarán notificaciones de nuevas citas
 
 **Token de API (Seguridad):**
 - `API_TOKEN` (opcional pero recomendado): Token de seguridad para proteger los endpoints
@@ -357,10 +462,26 @@ curl "https://api-citas-seven.vercel.app/api/disponibles?startDate=2026-01-20&en
 
 ## 🔒 Seguridad
 
-- Tokens de cancelación generados con `secrets.token_urlsafe(32)` (43 caracteres)
-- CORS habilitado para todos los orígenes
-- Row Level Security (RLS) configurado en Supabase
-- Variables de entorno para credenciales sensibles
+- **Autenticación:** Token de API requerido en header `Authorization: Bearer TOKEN` (excepto `/api/cancelar`)
+- **Tokens de cancelación:** Generados con `secrets.token_urlsafe(32)` (43 caracteres)
+- **CORS:** Habilitado para todos los orígenes
+- **RLS:** Row Level Security configurado en Supabase
+- **Variables de entorno:** Credenciales sensibles almacenadas en Vercel
+
+## 📊 Estados de Cita
+
+- `Confirmada` - Cita activa (se muestra en calendario)
+- `Cancelada` - Cita cancelada (no aparece al filtrar por `estado=Confirmada`)
+- `Completada` - Cita finalizada
+- Puedes definir estados personalizados según tus necesidades
+
+## 💡 Mejores Prácticas
+
+1. **Filtrar por estado en el calendario:** Usa `?estado=Confirmada` para mostrar solo citas activas
+2. **No eliminar citas:** Usa DELETE que cambia estado a "Cancelada" para mantener historial
+3. **Tokens de cancelación:** Incluye la `Url_Cancelacion` en emails/SMS a clientes
+4. **Webhooks:** Configura `WEBHOOK_URL` para recibir notificaciones de nuevas citas
+5. **Notificaciones:** Marca como enviadas usando PUT con `{"Notificacion": "enviada"}`
 
 ## 📄 Licencia
 
