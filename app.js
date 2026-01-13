@@ -811,10 +811,13 @@ class CalendarioApp {
 
   async cargarCitas() {
     try {
-      // OPTIMIZACIÓN: Solo cargar la semana visible (7 días)
-      // Esto hace que la carga inicial sea instantánea como en vista Disponibles
-      const inicio = this.currentWeek.format('YYYY-MM-DD');
-      const fin = this.currentWeek.add(6, 'day').format('YYYY-MM-DD');
+      // OPTIMIZACIÓN: Cargar el rango que cubre los días laborables visibles
+      // Generar los días laborables que se mostrarán en el calendario
+      const diasLaborables = this.diasLaborablesService.generarDiasLaborables(this.currentWeek, 7);
+      
+      // Obtener la fecha de inicio (primer día laborable) y fin (último día laborable)
+      const inicio = diasLaborables[0].format('YYYY-MM-DD');
+      const fin = diasLaborables[diasLaborables.length - 1].format('YYYY-MM-DD');
 
       const citas = await this.api.getCitas(inicio, fin);
 
